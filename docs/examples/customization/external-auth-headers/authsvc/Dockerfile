@@ -1,4 +1,4 @@
-FROM alpine:3.10
+FROM alpine:3
 MAINTAINER Roman Safronov <electroma@gmail.com>
 COPY authsvc /
 EXPOSE 8080
