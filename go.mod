@@ -13,7 +13,7 @@ require (
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/mitchellh/go-ps v1.0.0
 	github.com/mitchellh/hashstructure v1.1.0
-	github.com/mitchellh/mapstructure v1.4.1
+	github.com/mitchellh/mapstructure v1.4.2
 	github.com/moul/pb v0.0.0-20180404114147-54bdd96e6a52
 	github.com/ncabatoff/process-exporter v0.7.5
 	github.com/onsi/ginkgo v1.16.4
@@ -40,7 +40,7 @@ require (
 	k8s.io/client-go v0.21.5
 	k8s.io/code-generator v0.21.5
 	k8s.io/component-base v0.21.5
-	k8s.io/klog/v2 v2.10.0
+	k8s.io/klog/v2 v2.20.0
 	k8s.io/utils v0.0.0-20210802155522-efc7438f0176 // indirect
 	pault.ag/go/sniff v0.0.0-20200207005214-cf7e4d167732
 	sigs.k8s.io/controller-runtime v0.9.5
@@ -73,12 +73,11 @@ require (
 	github.com/form3tech-oss/jwt-go v3.2.2+incompatible // indirect
 	github.com/fullsailor/pkcs7 v0.0.0-20160414161337-2585af45975b // indirect
 	github.com/go-errors/errors v1.0.1 // indirect
-	github.com/go-logr/logr v0.4.0 // indirect
+	github.com/go-logr/logr v1.0.0 // indirect
 	github.com/go-openapi/jsonpointer v0.19.3 // indirect
 	github.com/go-openapi/jsonreference v0.19.3 // indirect
 	github.com/go-openapi/spec v0.19.5 // indirect
 	github.com/go-openapi/swag v0.19.5 // indirect
-	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
 	github.com/godbus/dbus/v5 v5.0.4 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
