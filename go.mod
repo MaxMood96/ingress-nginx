@@ -32,12 +32,12 @@ require (
 	google.golang.org/grpc v1.41.0
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/pool.v3 v3.1.1
-	k8s.io/api v0.22.2
+	k8s.io/api v0.22.3
 	k8s.io/apiextensions-apiserver v0.22.2
-	k8s.io/apimachinery v0.22.2
+	k8s.io/apimachinery v0.22.3
 	k8s.io/apiserver v0.22.2
-	k8s.io/cli-runtime v0.21.5
-	k8s.io/client-go v0.22.2
+	k8s.io/cli-runtime v0.22.3
+	k8s.io/client-go v0.22.3
 	k8s.io/code-generator v0.22.2
 	k8s.io/component-base v0.22.2
 	k8s.io/klog/v2 v2.10.0
@@ -76,7 +76,6 @@ require (
 	github.com/go-logr/logr v0.4.0 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.19.5 // indirect
-	github.com/go-openapi/spec v0.19.5 // indirect
 	github.com/go-openapi/swag v0.19.14 // indirect
 	github.com/godbus/dbus/v5 v5.0.4 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -139,8 +138,8 @@ require (
 	k8s.io/gengo v0.0.0-20201214224949-b6c5ce23f027 // indirect
 	k8s.io/kube-openapi v0.0.0-20210421082810-95288971da7e // indirect
 	moul.io/http2curl v1.0.1-0.20190925090545-5cd742060b0e // indirect
-	sigs.k8s.io/kustomize/api v0.8.8 // indirect
-	sigs.k8s.io/kustomize/kyaml v0.10.17 // indirect
+	sigs.k8s.io/kustomize/api v0.8.11 // indirect
+	sigs.k8s.io/kustomize/kyaml v0.11.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
