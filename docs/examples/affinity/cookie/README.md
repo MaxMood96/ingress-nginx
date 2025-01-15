@@ -14,6 +14,7 @@ Session affinity can be configured using the following annotations:
 |nginx.ingress.kubernetes.io/session-cookie-name|Name of the cookie that will be created|string (defaults to `INGRESSCOOKIE`)|
 |nginx.ingress.kubernetes.io/session-cookie-secure|Set the cookie as secure regardless the protocol of the incoming request|`"true"` or `"false"`|
 |nginx.ingress.kubernetes.io/session-cookie-path|Path that will be set on the cookie (required if your [Ingress paths][ingress-paths] use regular expressions)|string (defaults to the currently [matched path][ingress-paths])|
+|nginx.ingress.kubernetes.io/session-cookie-domain|Domain that will be set on the cookie|string|
 |nginx.ingress.kubernetes.io/session-cookie-samesite|`SameSite` attribute to apply to the cookie|Browser accepted values are `None`, `Lax`, and `Strict`|
 |nginx.ingress.kubernetes.io/session-cookie-conditional-samesite-none|Will omit `SameSite=None` attribute for older browsers which reject the more-recently defined `SameSite=None` value|`"true"` or `"false"`
 |nginx.ingress.kubernetes.io/session-cookie-max-age|Time until the cookie expires, corresponds to the `Max-Age` cookie directive|number of seconds|
@@ -66,7 +67,7 @@ Accept-Ranges: bytes
 ```
 
 In the example above, you can see that the response contains a `Set-Cookie` header with the settings we have defined.
-This cookie is created by the NGINX Ingress Controller, it contains a randomly generated key corresponding to the upstream used for that request (selected using [consistent hashing][consistent-hashing]) and has an `Expires` directive.
+This cookie is created by the Ingress-Nginx Controller, it contains a randomly generated key corresponding to the upstream used for that request (selected using [consistent hashing][consistent-hashing]) and has an `Expires` directive.
 If a client sends a cookie that doesn't correspond to an upstream, NGINX selects an upstream and creates a corresponding cookie.
 
 If the backend pool grows NGINX will keep sending the requests through the same server of the first request, even if it's overloaded.

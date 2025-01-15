@@ -20,14 +20,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	networking "k8s.io/api/networking/v1"
 
 	"k8s.io/ingress-nginx/test/e2e/framework"
 )
 
-func errorBlockName(upstreamName string, errorCode string) string {
+func errorBlockName(upstreamName, errorCode string) string {
 	return fmt.Sprintf("@custom_%s_%s", upstreamName, errorCode)
 }
 

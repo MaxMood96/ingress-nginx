@@ -20,7 +20,7 @@ import (
 	"os/exec"
 	"syscall"
 
-	"k8s.io/klog/v2"
+	klog "k8s.io/klog/v2"
 )
 
 // IsRespawnIfRequired checks if error type is exec.ExitError or not
@@ -30,7 +30,10 @@ func IsRespawnIfRequired(err error) bool {
 		return false
 	}
 
-	waitStatus := exitError.Sys().(syscall.WaitStatus)
+	waitStatus, ok := exitError.Sys().(syscall.WaitStatus)
+	if !ok {
+		return false
+	}
 	klog.Warningf(`
 -------------------------------------------------------------------------------
 NGINX master process died (%v): %v

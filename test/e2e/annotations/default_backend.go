@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 
 	"k8s.io/ingress-nginx/test/e2e/framework"
 )
@@ -48,18 +48,18 @@ var _ = framework.DescribeAnnotation("default-backend", func() {
 					return strings.Contains(server, fmt.Sprintf("server_name %v", host))
 				})
 
-			requestId := "something-unique"
+			requestID := "something-unique"
 
 			f.HTTPTestClient().
 				GET("/alma/armud").
 				WithHeader("Host", host).
-				WithHeader("x-request-id", requestId).
+				WithHeader("x-request-id", requestID).
 				Expect().
 				Status(http.StatusOK).
 				Body().Contains("x-code=503").
 				Contains(fmt.Sprintf("x-ingress-name=%s", host)).
 				Contains("x-service-name=invalid").
-				Contains(fmt.Sprintf("x-request-id=%s", requestId))
+				Contains(fmt.Sprintf("x-request-id=%s", requestID))
 		})
 	})
 })

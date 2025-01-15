@@ -32,121 +32,9 @@ import (
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"k8s.io/ingress-nginx/internal/ingress"
 	"k8s.io/ingress-nginx/internal/nginx"
+	"k8s.io/ingress-nginx/pkg/apis/ingress"
 )
-
-func TestIsDynamicConfigurationEnough(t *testing.T) {
-	backends := []*ingress.Backend{{
-		Name: "fakenamespace-myapp-80",
-		Endpoints: []ingress.Endpoint{
-			{
-				Address: "10.0.0.1",
-				Port:    "8080",
-			},
-			{
-				Address: "10.0.0.2",
-				Port:    "8080",
-			},
-		},
-	}}
-
-	servers := []*ingress.Server{{
-		Hostname: "myapp.fake",
-		Locations: []*ingress.Location{
-			{
-				Path:    "/",
-				Backend: "fakenamespace-myapp-80",
-			},
-		},
-		SSLCert: &ingress.SSLCert{
-			PemCertKey: "fake-certificate",
-		},
-	}}
-
-	commonConfig := &ingress.Configuration{
-		Backends: backends,
-		Servers:  servers,
-	}
-
-	n := &NGINXController{
-		runningConfig: &ingress.Configuration{
-			Backends: backends,
-			Servers:  servers,
-		},
-		cfg: &Configuration{},
-	}
-
-	newConfig := commonConfig
-	if !n.IsDynamicConfigurationEnough(newConfig) {
-		t.Errorf("When new config is same as the running config it should be deemed as dynamically configurable")
-	}
-
-	newConfig = &ingress.Configuration{
-		Backends: []*ingress.Backend{{Name: "another-backend-8081"}},
-		Servers:  []*ingress.Server{{Hostname: "myapp1.fake"}},
-	}
-	if n.IsDynamicConfigurationEnough(newConfig) {
-		t.Errorf("Expected to not be dynamically configurable when there's more than just backends change")
-	}
-
-	newConfig = &ingress.Configuration{
-		Backends: []*ingress.Backend{{Name: "a-backend-8080"}},
-		Servers:  servers,
-	}
-
-	if !n.IsDynamicConfigurationEnough(newConfig) {
-		t.Errorf("Expected to be dynamically configurable when only backends change")
-	}
-
-	newServers := []*ingress.Server{{
-		Hostname: "myapp1.fake",
-		Locations: []*ingress.Location{
-			{
-				Path:    "/",
-				Backend: "fakenamespace-myapp-80",
-			},
-		},
-		SSLCert: &ingress.SSLCert{
-			PemCertKey: "fake-certificate",
-		},
-	}}
-
-	newConfig = &ingress.Configuration{
-		Backends: backends,
-		Servers:  newServers,
-	}
-	if n.IsDynamicConfigurationEnough(newConfig) {
-		t.Errorf("Expected to not be dynamically configurable when dynamic certificates is enabled and a non-certificate field in servers is updated")
-	}
-
-	newServers[0].Hostname = "myapp.fake"
-	newServers[0].SSLCert.PemCertKey = "new-fake-certificate"
-
-	newConfig = &ingress.Configuration{
-		Backends: backends,
-		Servers:  newServers,
-	}
-	if !n.IsDynamicConfigurationEnough(newConfig) {
-		t.Errorf("Expected to be dynamically configurable when only SSLCert changes")
-	}
-
-	newConfig = &ingress.Configuration{
-		Backends: []*ingress.Backend{{Name: "a-backend-8080"}},
-		Servers:  newServers,
-	}
-	if !n.IsDynamicConfigurationEnough(newConfig) {
-		t.Errorf("Expected to be dynamically configurable when backend and SSLCert changes")
-	}
-
-	if !n.runningConfig.Equal(commonConfig) {
-		t.Errorf("Expected running config to not change")
-	}
-
-	if !newConfig.Equal(&ingress.Configuration{Backends: []*ingress.Backend{{Name: "a-backend-8080"}}, Servers: newServers}) {
-		t.Errorf("Expected new config to not change")
-	}
-}
 
 func TestConfigureDynamically(t *testing.T) {
 	listener, err := tryListen("tcp", fmt.Sprintf(":%v", nginx.StatusPort))
@@ -170,11 +58,12 @@ func TestConfigureDynamically(t *testing.T) {
 
 	server := &httptest.Server{
 		Listener: listener,
+		//nolint:gosec // Ignore not configured ReadHeaderTimeout in testing
 		Config: &http.Server{
 			Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusCreated)
 
-				if r.Method != "POST" {
+				if r.Method != http.MethodPost {
 					t.Errorf("expected a 'POST' request, got '%s'", r.Method)
 				}
 
@@ -188,23 +77,17 @@ func TestConfigureDynamically(t *testing.T) {
 
 				switch r.URL.Path {
 				case "/configuration/backends":
-					{
-						if strings.Contains(body, "target") {
-							t.Errorf("unexpected target reference in JSON content: %v", body)
-						}
+					if strings.Contains(body, "target") {
+						t.Errorf("unexpected target reference in JSON content: %v", body)
+					}
 
-						if !strings.Contains(body, "service") {
-							t.Errorf("service reference should be present in JSON content: %v", body)
-						}
+					if !strings.Contains(body, "service") {
+						t.Errorf("service reference should be present in JSON content: %v", body)
 					}
 				case "/configuration/general":
-					{
-					}
 				case "/configuration/servers":
-					{
-						if !strings.Contains(body, `{"certificates":{},"servers":{"myapp.fake":"-1"}}`) {
-							t.Errorf("should be present in JSON content: %v", body)
-						}
+					if !strings.Contains(body, `{"certificates":{},"servers":{"myapp.fake":"-1"}}`) {
+						t.Errorf("should be present in JSON content: %v", body)
 					}
 				default:
 					t.Errorf("unknown request to %s", r.URL.Path)
@@ -330,11 +213,12 @@ func TestConfigureCertificates(t *testing.T) {
 
 	server := &httptest.Server{
 		Listener: listener,
+		//nolint:gosec // Ignore not configured ReadHeaderTimeout in testing
 		Config: &http.Server{
 			Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusCreated)
 
-				if r.Method != "POST" {
+				if r.Method != http.MethodPost {
 					t.Errorf("expected a 'POST' request, got '%s'", r.Method)
 				}
 
@@ -477,10 +361,11 @@ func TestCleanTempNginxCfg(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	tmpfile, err := os.CreateTemp("", tempNginxPattern)
+	tmpfile, err := os.CreateTemp(filepath.Join(os.TempDir(), "nginx"), tempNginxPattern)
 	if err != nil {
 		t.Fatal(err)
 	}
+	expectedDeletedFile := tmpfile.Name()
 	defer tmpfile.Close()
 
 	dur, err := time.ParseDuration("-10m")
@@ -494,10 +379,11 @@ func TestCleanTempNginxCfg(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	tmpfile, err = os.CreateTemp("", tempNginxPattern)
+	tmpfile, err = os.CreateTemp(filepath.Join(os.TempDir(), "nginx"), tempNginxPattern)
 	if err != nil {
 		t.Fatal(err)
 	}
+	expectedFile := tmpfile.Name()
 	defer tmpfile.Close()
 
 	err = cleanTempNginxCfg()
@@ -507,8 +393,8 @@ func TestCleanTempNginxCfg(t *testing.T) {
 
 	var files []string
 
-	err = filepath.Walk(os.TempDir(), func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() && os.TempDir() != path {
+	err = filepath.Walk(filepath.Join(os.TempDir(), "nginx"), func(path string, info os.FileInfo, _ error) error {
+		if info.IsDir() && filepath.Join(os.TempDir(), "nginx") != path {
 			return filepath.SkipDir
 		}
 
@@ -521,11 +407,22 @@ func TestCleanTempNginxCfg(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(files) != 1 {
-		t.Errorf("expected one file but %d were found", len(files))
+	// some other files can be created by other tests
+	var found bool
+	for _, file := range files {
+		if file == expectedDeletedFile {
+			t.Errorf("file %s should be deleted", file)
+		}
+		if file == expectedFile {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("file %s should not be deleted", expectedFile)
 	}
 }
 
+//nolint:unparam // Ignore `network` always receives `"tcp"` error
 func tryListen(network, address string) (l net.Listener, err error) {
 	condFunc := func() (bool, error) {
 		l, err = net.Listen(network, address)

@@ -24,11 +24,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 
 	appsv1 "k8s.io/api/apps/v1"
-	apiv1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -71,7 +71,7 @@ var _ = framework.IngressNginxDescribe("[Status] status update", func() {
 
 		f.NewEchoDeployment()
 
-		ing := f.EnsureIngress(framework.NewSingleIngress(host, "/", host, f.Namespace, framework.EchoService, 80, nil))
+		f.EnsureIngress(framework.NewSingleIngress(host, "/", host, f.Namespace, framework.EchoService, 80, nil))
 
 		f.WaitForNginxConfiguration(
 			func(cfg string) bool {
@@ -84,18 +84,18 @@ var _ = framework.IngressNginxDescribe("[Status] status update", func() {
 		err = cmd.Process.Kill()
 		assert.Nil(ginkgo.GinkgoT(), err, "unexpected error terminating kubectl proxy")
 
-		ing, err = f.KubeClientSet.NetworkingV1().Ingresses(f.Namespace).Get(context.TODO(), host, metav1.GetOptions{})
+		ing, err := f.KubeClientSet.NetworkingV1().Ingresses(f.Namespace).Get(context.TODO(), host, metav1.GetOptions{})
 		assert.Nil(ginkgo.GinkgoT(), err, "unexpected error getting %s/%v Ingress", f.Namespace, host)
 
-		ing.Status.LoadBalancer.Ingress = []apiv1.LoadBalancerIngress{}
+		ing.Status.LoadBalancer.Ingress = []v1.IngressLoadBalancerIngress{}
 		_, err = f.KubeClientSet.NetworkingV1().Ingresses(f.Namespace).UpdateStatus(context.TODO(), ing, metav1.UpdateOptions{})
 		assert.Nil(ginkgo.GinkgoT(), err, "unexpected error cleaning Ingress status")
 		framework.Sleep(10 * time.Second)
 
-		err = f.KubeClientSet.CoreV1().
-			ConfigMaps(f.Namespace).
+		err = f.KubeClientSet.CoordinationV1().
+			Leases(f.Namespace).
 			Delete(context.TODO(), "ingress-controller-leader", metav1.DeleteOptions{})
-		assert.Nil(ginkgo.GinkgoT(), err, "unexpected error deleting leader election configmap")
+		assert.Nil(ginkgo.GinkgoT(), err, "unexpected error deleting leader election lease")
 
 		_, cmd, err = f.KubectlProxy(port)
 		assert.Nil(ginkgo.GinkgoT(), err, "unexpected error starting kubectl proxy")
@@ -108,6 +108,7 @@ var _ = framework.IngressNginxDescribe("[Status] status update", func() {
 			}
 		}()
 
+		//nolint:staticcheck // TODO: will replace it since wait.Poll is deprecated
 		err = wait.Poll(5*time.Second, 4*time.Minute, func() (done bool, err error) {
 			ing, err = f.KubeClientSet.NetworkingV1().Ingresses(f.Namespace).Get(context.TODO(), host, metav1.GetOptions{})
 			if err != nil {
@@ -121,9 +122,9 @@ var _ = framework.IngressNginxDescribe("[Status] status update", func() {
 			return true, nil
 		})
 		assert.Nil(ginkgo.GinkgoT(), err, "unexpected error waiting for ingress status")
-		assert.Equal(ginkgo.GinkgoT(), ing.Status.LoadBalancer.Ingress, ([]apiv1.LoadBalancerIngress{
+		assert.Equal(ginkgo.GinkgoT(), ing.Status.LoadBalancer.Ingress, []v1.IngressLoadBalancerIngress{
 			{IP: "1.1.0.0"},
-		}))
+		})
 	})
 })
 
@@ -134,7 +135,8 @@ func getHostIP() net.IP {
 	}
 	defer conn.Close()
 
-	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	localAddr, ok := conn.LocalAddr().(*net.UDPAddr)
+	assert.True(ginkgo.GinkgoT(), ok, "unexpected type: %T", conn.LocalAddr())
 
 	return localAddr.IP
 }

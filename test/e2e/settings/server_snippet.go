@@ -20,7 +20,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 
 	"k8s.io/ingress-nginx/test/e2e/framework"
 )
@@ -37,10 +37,18 @@ var _ = framework.DescribeSetting("configmap server-snippet", func() {
 		hostAnnots := "serverannotssnippet1.foo.com"
 
 		f.SetNginxConfigMapData(map[string]string{
+			"allow-snippet-annotations": "true",
+			"annotations-risk-level":    "Critical",
 			"server-snippet": `
 			more_set_headers "Globalfoo: Foooo";`,
 		})
 
+		defer func() {
+			f.SetNginxConfigMapData(map[string]string{
+				"allow-snippet-annotations": "false",
+				"annotations-risk-level":    "High",
+			})
+		}()
 		annotations := map[string]string{
 			"nginx.ingress.kubernetes.io/server-snippet": `
 				more_set_headers "Foo: Bar";
@@ -95,10 +103,17 @@ var _ = framework.DescribeSetting("configmap server-snippet", func() {
 
 		f.SetNginxConfigMapData(map[string]string{
 			"allow-snippet-annotations": "false",
+			"annotations-risk-level":    "Critical", // To allow Configuration Snippet
 			"server-snippet": `
 			more_set_headers "Globalfoo: Foooo";`,
 		})
 
+		defer func() {
+			f.SetNginxConfigMapData(map[string]string{
+				"allow-snippet-annotations": "false",
+				"annotations-risk-level":    "High",
+			})
+		}()
 		annotations := map[string]string{
 			"nginx.ingress.kubernetes.io/server-snippet": `
 				more_set_headers "Foo: Bar";

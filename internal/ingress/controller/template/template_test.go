@@ -34,23 +34,22 @@ import (
 	networking "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"k8s.io/ingress-nginx/internal/ingress"
 	"k8s.io/ingress-nginx/internal/ingress/annotations/authreq"
-	"k8s.io/ingress-nginx/internal/ingress/annotations/influxdb"
 	"k8s.io/ingress-nginx/internal/ingress/annotations/modsecurity"
-	"k8s.io/ingress-nginx/internal/ingress/annotations/opentracing"
+	"k8s.io/ingress-nginx/internal/ingress/annotations/opentelemetry"
 	"k8s.io/ingress-nginx/internal/ingress/annotations/ratelimit"
 	"k8s.io/ingress-nginx/internal/ingress/annotations/rewrite"
 	"k8s.io/ingress-nginx/internal/ingress/controller/config"
 	"k8s.io/ingress-nginx/internal/nginx"
+	"k8s.io/ingress-nginx/pkg/apis/ingress"
 )
 
 func init() {
 	// the default value of nginx.TemplatePath assumes the template exists in
 	// the root filesystem and not in the rootfs directory
-	path, err := filepath.Abs(filepath.Join("../../../../rootfs/", nginx.TemplatePath))
+	absPath, err := filepath.Abs(filepath.Join("..", "..", "..", "..", "rootfs", nginx.TemplatePath))
 	if err == nil {
-		nginx.TemplatePath = path
+		nginx.TemplatePath = absPath
 	}
 }
 
@@ -63,7 +62,7 @@ var (
 		Target            string
 		Location          string
 		ProxyPass         string
-		AutoHttpProxyPass string
+		AutoHTTPProxyPass string
 		Sticky            bool
 		XForwardedPrefix  string
 		SecureBackend     bool
@@ -200,6 +199,12 @@ proxy_pass $scheme://upstream_balancer;`,
 	}
 )
 
+const (
+	defaultBackend = "upstream-name"
+	defaultHost    = "example.com"
+	fooAuthHost    = "foo.com/auth"
+)
+
 func getTestDataDir() (string, error) {
 	pwd, err := os.Getwd()
 	if err != nil {
@@ -326,9 +331,6 @@ func TestBuildLocation(t *testing.T) {
 }
 
 func TestBuildProxyPass(t *testing.T) {
-	defaultBackend := "upstream-name"
-	defaultHost := "example.com"
-
 	for k, tc := range tmplFuncTestcases {
 		loc := &ingress.Location{
 			Path:             tc.Path,
@@ -339,7 +341,7 @@ func TestBuildProxyPass(t *testing.T) {
 		}
 
 		if tc.SecureBackend {
-			loc.BackendProtocol = "HTTPS"
+			loc.BackendProtocol = httpsProtocol
 		}
 
 		backend := &ingress.Backend{
@@ -367,9 +369,6 @@ func TestBuildProxyPass(t *testing.T) {
 }
 
 func TestBuildProxyPassAutoHttp(t *testing.T) {
-	defaultBackend := "upstream-name"
-	defaultHost := "example.com"
-
 	for k, tc := range tmplFuncTestcases {
 		loc := &ingress.Location{
 			Path:             tc.Path,
@@ -379,9 +378,9 @@ func TestBuildProxyPassAutoHttp(t *testing.T) {
 		}
 
 		if tc.SecureBackend {
-			loc.BackendProtocol = "HTTPS"
+			loc.BackendProtocol = httpsProtocol
 		} else {
-			loc.BackendProtocol = "AUTO_HTTP"
+			loc.BackendProtocol = autoHTTPProtocol
 		}
 
 		backend := &ingress.Backend{
@@ -402,7 +401,7 @@ func TestBuildProxyPassAutoHttp(t *testing.T) {
 		backends := []*ingress.Backend{backend}
 
 		pp := buildProxyPass(defaultHost, backends, loc)
-		if !strings.EqualFold(tc.AutoHttpProxyPass, pp) {
+		if !strings.EqualFold(tc.AutoHTTPProxyPass, pp) {
 			t.Errorf("%s: expected \n'%v'\nbut returned \n'%v'", k, tc.ProxyPass, pp)
 		}
 	}
@@ -417,7 +416,7 @@ func TestBuildAuthLocation(t *testing.T) {
 		t.Errorf("Expected '%v' but returned '%v'", expected, actual)
 	}
 
-	authURL := "foo.com/auth"
+	authURL := fooAuthHost
 	globalAuthURL := "foo.com/global-auth"
 
 	loc := &ingress.Location{
@@ -428,7 +427,7 @@ func TestBuildAuthLocation(t *testing.T) {
 		EnableGlobalAuth: true,
 	}
 
-	encodedAuthURL := strings.Replace(base64.URLEncoding.EncodeToString([]byte(loc.Path)), "=", "", -1)
+	encodedAuthURL := strings.ReplaceAll(base64.URLEncoding.EncodeToString([]byte(loc.Path)), "=", "")
 	externalAuthPath := fmt.Sprintf("/_external-auth-%v-default", encodedAuthURL)
 
 	testCases := []struct {
@@ -460,8 +459,7 @@ func TestBuildAuthLocation(t *testing.T) {
 }
 
 func TestShouldApplyGlobalAuth(t *testing.T) {
-
-	authURL := "foo.com/auth"
+	authURL := fooAuthHost
 	globalAuthURL := "foo.com/global-auth"
 
 	loc := &ingress.Location{
@@ -502,14 +500,46 @@ func TestShouldApplyGlobalAuth(t *testing.T) {
 
 func TestBuildAuthResponseHeaders(t *testing.T) {
 	externalAuthResponseHeaders := []string{"h1", "H-With-Caps-And-Dashes"}
-	expected := []string{
-		"auth_request_set $authHeader0 $upstream_http_h1;",
-		"proxy_set_header 'h1' $authHeader0;",
-		"auth_request_set $authHeader1 $upstream_http_h_with_caps_and_dashes;",
-		"proxy_set_header 'H-With-Caps-And-Dashes' $authHeader1;",
+	tests := []struct {
+		headers  []string
+		expected []string
+		lua      bool
+	}{
+		{
+			headers: externalAuthResponseHeaders,
+			lua:     false,
+			expected: []string{
+				"auth_request_set $authHeader0 $upstream_http_h1;",
+				"proxy_set_header 'h1' $authHeader0;",
+				"auth_request_set $authHeader1 $upstream_http_h_with_caps_and_dashes;",
+				"proxy_set_header 'H-With-Caps-And-Dashes' $authHeader1;",
+			},
+		},
+		{
+			headers: externalAuthResponseHeaders,
+			lua:     true,
+			expected: []string{
+				"set $authHeader0 '';",
+				"proxy_set_header 'h1' $authHeader0;",
+				"set $authHeader1 '';",
+				"proxy_set_header 'H-With-Caps-And-Dashes' $authHeader1;",
+			},
+		},
 	}
 
-	headers := buildAuthResponseHeaders(proxySetHeader(nil), externalAuthResponseHeaders)
+	for _, test := range tests {
+		got := buildAuthResponseHeaders(proxySetHeader(nil), test.headers, test.lua)
+		if !reflect.DeepEqual(test.expected, got) {
+			t.Errorf("Expected \n'%v'\nbut returned \n'%v'", test.expected, got)
+		}
+	}
+}
+
+func TestBuildAuthResponseLua(t *testing.T) {
+	externalAuthResponseHeaders := []string{"h1", "H-With-Caps-And-Dashes"}
+	expected := "h1,H-With-Caps-And-Dashes"
+
+	headers := buildAuthUpstreamLuaHeaders(externalAuthResponseHeaders)
 
 	if !reflect.DeepEqual(expected, headers) {
 		t.Errorf("Expected \n'%v'\nbut returned \n'%v'", expected, headers)
@@ -533,8 +563,144 @@ func TestBuildAuthProxySetHeaders(t *testing.T) {
 	}
 }
 
+func TestBuildAuthUpstreamName(t *testing.T) {
+	invalidType := &ingress.Ingress{}
+	expected := ""
+	actual := buildAuthUpstreamName(invalidType, "")
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Expected '%v' but returned '%v'", expected, actual)
+	}
+
+	loc := &ingress.Location{
+		ExternalAuth: authreq.Config{
+			URL: fooAuthHost,
+		},
+		Path: "/cat",
+	}
+
+	encodedAuthURL := strings.ReplaceAll(base64.URLEncoding.EncodeToString([]byte(loc.Path)), "=", "")
+	externalAuthPath := fmt.Sprintf("external-auth-%v-default", encodedAuthURL)
+
+	testCases := []struct {
+		title    string
+		host     string
+		expected string
+	}{
+		{"valid host", "auth.my.site", fmt.Sprintf("%s-%s", "auth.my.site", externalAuthPath)},
+		{"valid host", "your.auth.site", fmt.Sprintf("%s-%s", "your.auth.site", externalAuthPath)},
+		{"empty host", "", ""},
+	}
+
+	for _, testCase := range testCases {
+		str := buildAuthUpstreamName(loc, testCase.host)
+		if str != testCase.expected {
+			t.Errorf("%v: expected '%v' but returned '%v'", testCase.title, testCase.expected, str)
+		}
+	}
+}
+
+func TestShouldApplyAuthUpstream(t *testing.T) {
+	authURL := fooAuthHost
+
+	loc := &ingress.Location{
+		ExternalAuth: authreq.Config{
+			URL:                  authURL,
+			KeepaliveConnections: 0,
+		},
+		Path: "/cat",
+	}
+
+	cfg := config.Configuration{
+		UseHTTP2: false,
+	}
+
+	testCases := []struct {
+		title                string
+		authURL              string
+		keepaliveConnections int
+		expected             bool
+	}{
+		{"authURL, no keepalive", authURL, 0, false},
+		{"authURL, keepalive", authURL, 10, true},
+		{"empty, no keepalive", "", 0, false},
+		{"empty, keepalive", "", 10, false},
+	}
+
+	for _, testCase := range testCases {
+		loc.ExternalAuth.URL = testCase.authURL
+		loc.ExternalAuth.KeepaliveConnections = testCase.keepaliveConnections
+
+		result := shouldApplyAuthUpstream(loc, cfg)
+		if result != testCase.expected {
+			t.Errorf("%v: expected '%v' but returned '%v'", testCase.title, testCase.expected, result)
+		}
+	}
+
+	// keepalive is not supported with UseHTTP2
+	cfg.UseHTTP2 = true
+	for _, testCase := range testCases {
+		loc.ExternalAuth.URL = testCase.authURL
+		loc.ExternalAuth.KeepaliveConnections = testCase.keepaliveConnections
+
+		result := shouldApplyAuthUpstream(loc, cfg)
+		if result != false {
+			t.Errorf("%v: expected '%v' but returned '%v'", testCase.title, false, result)
+		}
+	}
+}
+
+func TestExtractHostPort(t *testing.T) {
+	testCases := []struct {
+		title    string
+		url      string
+		expected string
+	}{
+		{"full URL", "https://my.auth.site:5000/path", "my.auth.site:5000"},
+		{"URL with no port", "http://my.auth.site/path", "my.auth.site"},
+		{"URL with no path", "https://my.auth.site:5000", "my.auth.site:5000"},
+		{"URL no port and path", "http://my.auth.site", "my.auth.site"},
+		{"missing method", "my.auth.site/path", ""},
+		{"all empty", "", ""},
+	}
+
+	for _, testCase := range testCases {
+		result := extractHostPort(testCase.url)
+		if result != testCase.expected {
+			t.Errorf("%v: expected '%v' but returned '%v'", testCase.title, testCase.expected, result)
+		}
+	}
+}
+
+func TestChangeHostPort(t *testing.T) {
+	testCases := []struct {
+		title    string
+		url      string
+		host     string
+		expected string
+	}{
+		{"full URL", "https://my.auth.site:5000/path", "your.domain", "https://your.domain/path"},
+		{"URL with no port", "http://my.auth.site/path", "your.domain", "http://your.domain/path"},
+		{"URL with no path", "http://my.auth.site:5000", "your.domain:8888", "http://your.domain:8888"},
+		{"URL with no port and path", "https://my.auth.site", "your.domain:8888", "https://your.domain:8888"},
+		{"invalid host", "my.auth.site/path", "", ""},
+		{"missing method", "my.auth.site/path", "your.domain", ""},
+		{"all empty", "", "", ""},
+	}
+
+	for _, testCase := range testCases {
+		result := changeHostPort(testCase.url, testCase.host)
+		if result != testCase.expected {
+			t.Errorf("%v: expected '%v' but returned '%v'", testCase.title, testCase.expected, result)
+		}
+	}
+}
+
 func TestTemplateWithData(t *testing.T) {
-	pwd, _ := os.Getwd()
+	pwd, err := os.Getwd()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
 	f, err := os.Open(path.Join(pwd, "../../../../test/data/config.json"))
 	if err != nil {
 		t.Errorf("unexpected error reading json file: %v", err)
@@ -559,7 +725,7 @@ func TestTemplateWithData(t *testing.T) {
 
 	dat.Cfg.DefaultSSLCertificate = &ingress.SSLCert{}
 
-	rt, err := ngxTpl.Write(dat)
+	rt, err := ngxTpl.Write(&dat)
 	if err != nil {
 		t.Errorf("invalid NGINX template: %v", err)
 	}
@@ -578,7 +744,10 @@ func TestTemplateWithData(t *testing.T) {
 }
 
 func BenchmarkTemplateWithData(b *testing.B) {
-	pwd, _ := os.Getwd()
+	pwd, err := os.Getwd()
+	if err != nil {
+		b.Errorf("unexpected error: %v", err)
+	}
 	f, err := os.Open(path.Join(pwd, "../../../../test/data/config.json"))
 	if err != nil {
 		b.Errorf("unexpected error reading json file: %v", err)
@@ -599,7 +768,9 @@ func BenchmarkTemplateWithData(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		ngxTpl.Write(dat)
+		if _, err := ngxTpl.Write(&dat); err != nil {
+			b.Errorf("unexpected error writing template: %v", err)
+		}
 	}
 }
 
@@ -896,9 +1067,6 @@ func TestBuildUpstreamName(t *testing.T) {
 		t.Errorf("Expected '%v' but returned '%v'", expected, actual)
 	}
 
-	defaultBackend := "upstream-name"
-	defaultHost := "example.com"
-
 	for k, tc := range tmplFuncTestcases {
 		loc := &ingress.Location{
 			Path:             tc.Path,
@@ -909,7 +1077,7 @@ func TestBuildUpstreamName(t *testing.T) {
 		}
 
 		if tc.SecureBackend {
-			loc.BackendProtocol = "HTTPS"
+			loc.BackendProtocol = httpsProtocol
 		}
 
 		backend := &ingress.Backend{
@@ -962,20 +1130,19 @@ func TestEscapeLiteralDollar(t *testing.T) {
 	}
 }
 
-func TestOpentracingPropagateContext(t *testing.T) {
+func TestOpentelemetryPropagateContext(t *testing.T) {
 	tests := map[*ingress.Location]string{
-		{BackendProtocol: "HTTP"}:      "opentracing_propagate_context;",
-		{BackendProtocol: "HTTPS"}:     "opentracing_propagate_context;",
-		{BackendProtocol: "AUTO_HTTP"}: "opentracing_propagate_context;",
-		{BackendProtocol: "GRPC"}:      "opentracing_grpc_propagate_context;",
-		{BackendProtocol: "GRPCS"}:     "opentracing_grpc_propagate_context;",
-		{BackendProtocol: "AJP"}:       "opentracing_propagate_context;",
-		{BackendProtocol: "FCGI"}:      "opentracing_propagate_context;",
-		nil:                            "",
+		{BackendProtocol: httpProtocol}:     "opentelemetry_propagate;",
+		{BackendProtocol: httpsProtocol}:    "opentelemetry_propagate;",
+		{BackendProtocol: autoHTTPProtocol}: "opentelemetry_propagate;",
+		{BackendProtocol: grpcProtocol}:     "opentelemetry_propagate;",
+		{BackendProtocol: grpcsProtocol}:    "opentelemetry_propagate;",
+		{BackendProtocol: fcgiProtocol}:     "opentelemetry_propagate;",
+		nil:                                 "",
 	}
 
 	for loc, expectedDirective := range tests {
-		actualDirective := opentracingPropagateContext(loc)
+		actualDirective := opentelemetryPropagateContext(loc)
 		if actualDirective != expectedDirective {
 			t.Errorf("Expected %v but returned %v", expectedDirective, actualDirective)
 		}
@@ -983,7 +1150,6 @@ func TestOpentracingPropagateContext(t *testing.T) {
 }
 
 func TestGetIngressInformation(t *testing.T) {
-
 	testcases := map[string]struct {
 		Ingress  interface{}
 		Host     string
@@ -1437,7 +1603,7 @@ func TestProxySetHeader(t *testing.T) {
 		{
 			name: "gRPC backend",
 			loc: &ingress.Location{
-				BackendProtocol: "GRPC",
+				BackendProtocol: grpcProtocol,
 			},
 			expected: "grpc_set_header",
 		},
@@ -1451,108 +1617,35 @@ func TestProxySetHeader(t *testing.T) {
 	}
 }
 
-func TestBuildInfluxDB(t *testing.T) {
+func TestBuildOpenTelemetry(t *testing.T) {
 	invalidType := &ingress.Ingress{}
 	expected := ""
-	actual := buildInfluxDB(invalidType)
-
-	if expected != actual {
-		t.Errorf("Expected '%v' but returned '%v'", expected, actual)
-	}
-
-	cfg := influxdb.Config{
-		InfluxDBEnabled:     true,
-		InfluxDBServerName:  "ok.com",
-		InfluxDBHost:        "host.com",
-		InfluxDBPort:        "5252",
-		InfluxDBMeasurement: "ok",
-	}
-	expected = "influxdb server_name=ok.com host=host.com port=5252 measurement=ok enabled=true;"
-	actual = buildInfluxDB(cfg)
-
-	if expected != actual {
-		t.Errorf("Expected '%v' but returned '%v'", expected, actual)
-	}
-}
-
-func TestBuildOpenTracing(t *testing.T) {
-	invalidType := &ingress.Ingress{}
-	expected := ""
-	actual := buildOpentracing(invalidType, []*ingress.Server{})
+	actual := buildOpentelemetry(invalidType, []*ingress.Server{})
 
 	if expected != actual {
 		t.Errorf("Expected '%v' but returned '%v'", expected, actual)
 	}
 
 	cfgNoHost := config.Configuration{
-		EnableOpentracing: true,
+		EnableOpentelemetry: true,
 	}
 	expected = "\r\n"
-	actual = buildOpentracing(cfgNoHost, []*ingress.Server{})
+	actual = buildOpentelemetry(cfgNoHost, []*ingress.Server{})
 
 	if expected != actual {
 		t.Errorf("Expected '%v' but returned '%v'", expected, actual)
 	}
 
-	cfgJaeger := config.Configuration{
-		EnableOpentracing:   true,
-		JaegerCollectorHost: "jaeger-host.com",
+	cfgOpenTelemetry := config.Configuration{
+		EnableOpentelemetry:        true,
+		OpentelemetryOperationName: "my-operation-name",
 	}
-	expected = "opentracing_load_tracer /usr/local/lib/libjaegertracing_plugin.so /etc/nginx/opentracing.json;\r\n"
-	actual = buildOpentracing(cfgJaeger, []*ingress.Server{})
-
+	expected = "\r\n"
+	expected += "opentelemetry_operation_name \"my-operation-name\";\n"
+	actual = buildOpentelemetry(cfgOpenTelemetry, []*ingress.Server{})
 	if expected != actual {
 		t.Errorf("Expected '%v' but returned '%v'", expected, actual)
 	}
-
-	cfgZipkin := config.Configuration{
-		EnableOpentracing:   true,
-		ZipkinCollectorHost: "zipkin-host.com",
-	}
-	expected = "opentracing_load_tracer /usr/local/lib/libzipkin_opentracing_plugin.so /etc/nginx/opentracing.json;\r\n"
-	actual = buildOpentracing(cfgZipkin, []*ingress.Server{})
-
-	if expected != actual {
-		t.Errorf("Expected '%v' but returned '%v'", expected, actual)
-	}
-
-	cfgDatadog := config.Configuration{
-		EnableOpentracing:    true,
-		DatadogCollectorHost: "datadog-host.com",
-	}
-	expected = "opentracing_load_tracer /usr/local/lib/libdd_opentracing.so /etc/nginx/opentracing.json;\r\n"
-	actual = buildOpentracing(cfgDatadog, []*ingress.Server{})
-
-	if expected != actual {
-		t.Errorf("Expected '%v' but returned '%v'", expected, actual)
-	}
-
-	cfgJaegerEndpoint := config.Configuration{
-		EnableOpentracing: true,
-		JaegerEndpoint:    "http://jaeger-collector.com:14268/api/traces",
-	}
-	expected = "opentracing_load_tracer /usr/local/lib/libjaegertracing_plugin.so /etc/nginx/opentracing.json;\r\n"
-	actual = buildOpentracing(cfgJaegerEndpoint, []*ingress.Server{})
-
-	if expected != actual {
-		t.Errorf("Expected '%v' but returned '%v'", expected, actual)
-	}
-
-	cfgOpenTracing := config.Configuration{
-		EnableOpentracing:                true,
-		DatadogCollectorHost:             "datadog-host.com",
-		OpentracingOperationName:         "my-operation-name",
-		OpentracingLocationOperationName: "my-location-operation-name",
-	}
-	expected = "opentracing_load_tracer /usr/local/lib/libdd_opentracing.so /etc/nginx/opentracing.json;\r\n"
-	expected += "opentracing_operation_name \"my-operation-name\";\n"
-	expected += "opentracing_location_operation_name \"my-location-operation-name\";\n"
-	actual = buildOpentracing(cfgOpenTracing, []*ingress.Server{})
-
-	if expected != actual {
-		t.Errorf("Expected '%v' but returned '%v'", expected, actual)
-	}
-
 }
 
 func TestEnforceRegexModifier(t *testing.T) {
@@ -1582,6 +1675,7 @@ func TestEnforceRegexModifier(t *testing.T) {
 	}
 }
 
+//nolint:dupl // Ignore dupl errors for similar test case
 func TestShouldLoadModSecurityModule(t *testing.T) {
 	// ### Invalid argument type tests ###
 	// The first tests should return false.
@@ -1635,15 +1729,16 @@ func TestShouldLoadModSecurityModule(t *testing.T) {
 	}
 }
 
-func TestOpentracingForLocation(t *testing.T) {
+func TestOpentelemetryForLocation(t *testing.T) {
 	trueVal := true
 	falseVal := false
 
-	loadOT := `opentracing on;
-opentracing_propagate_context;`
-	loadOTUntrustedSpan := `opentracing on;
-opentracing_propagate_context;
-opentracing_trust_incoming_span off;`
+	loadOT := `opentelemetry on;
+opentelemetry_propagate;
+opentelemetry_trust_incoming_spans on;`
+	loadOTUntrustedSpan := `opentelemetry on;
+opentelemetry_propagate;
+opentelemetry_trust_incoming_spans off;`
 	testCases := []struct {
 		description     string
 		globalOT        bool
@@ -1665,16 +1760,16 @@ opentracing_trust_incoming_span off;`
 
 	for _, testCase := range testCases {
 		il := &ingress.Location{
-			Opentracing: opentracing.Config{Set: testCase.isSetInLoc, TrustSet: testCase.isTrustSetInLoc},
+			Opentelemetry: opentelemetry.Config{Set: testCase.isSetInLoc, TrustSet: testCase.isTrustSetInLoc},
 		}
-		if il.Opentracing.Set {
-			il.Opentracing.Enabled = *testCase.isOTInLoc
+		if il.Opentelemetry.Set {
+			il.Opentelemetry.Enabled = *testCase.isOTInLoc
 		}
-		if il.Opentracing.TrustSet {
-			il.Opentracing.TrustEnabled = *testCase.isTrustInLoc
+		if il.Opentelemetry.TrustSet {
+			il.Opentelemetry.TrustEnabled = *testCase.isTrustInLoc
 		}
 
-		actual := buildOpentracingForLocation(testCase.globalOT, testCase.globalTrust, il)
+		actual := buildOpentelemetryForLocation(testCase.globalOT, testCase.globalTrust, il)
 
 		if testCase.expected != actual {
 			t.Errorf("%v: expected '%v' but returned '%v'", testCase.description, testCase.expected, actual)
@@ -1682,24 +1777,25 @@ opentracing_trust_incoming_span off;`
 	}
 }
 
-func TestShouldLoadOpentracingModule(t *testing.T) {
+//nolint:dupl // Ignore dupl errors for similar test case
+func TestShouldLoadOpentelemetryModule(t *testing.T) {
 	// ### Invalid argument type tests ###
 	// The first tests should return false.
 	expected := false
 
 	invalidType := &ingress.Ingress{}
-	actual := shouldLoadOpentracingModule(config.Configuration{}, invalidType)
+	actual := shouldLoadOpentelemetryModule(config.Configuration{}, invalidType)
 	if expected != actual {
 		t.Errorf("Expected '%v' but returned '%v'", expected, actual)
 	}
 
-	actual = shouldLoadOpentracingModule(invalidType, []*ingress.Server{})
+	actual = shouldLoadOpentelemetryModule(invalidType, []*ingress.Server{})
 	if expected != actual {
 		t.Errorf("Expected '%v' but returned '%v'", expected, actual)
 	}
 
 	// ### Functional tests ###
-	actual = shouldLoadOpentracingModule(config.Configuration{}, []*ingress.Server{})
+	actual = shouldLoadOpentelemetryModule(config.Configuration{}, []*ingress.Server{})
 	if expected != actual {
 		t.Errorf("Expected '%v' but returned '%v'", expected, actual)
 	}
@@ -1707,8 +1803,8 @@ func TestShouldLoadOpentracingModule(t *testing.T) {
 	// All further tests should return true.
 	expected = true
 
-	configuration := config.Configuration{EnableOpentracing: true}
-	actual = shouldLoadOpentracingModule(configuration, []*ingress.Server{})
+	configuration := config.Configuration{EnableOpentelemetry: true}
+	actual = shouldLoadOpentelemetryModule(configuration, []*ingress.Server{})
 	if expected != actual {
 		t.Errorf("Expected '%v' but returned '%v'", expected, actual)
 	}
@@ -1717,19 +1813,19 @@ func TestShouldLoadOpentracingModule(t *testing.T) {
 		{
 			Locations: []*ingress.Location{
 				{
-					Opentracing: opentracing.Config{
+					Opentelemetry: opentelemetry.Config{
 						Enabled: true,
 					},
 				},
 			},
 		},
 	}
-	actual = shouldLoadOpentracingModule(config.Configuration{}, servers)
+	actual = shouldLoadOpentelemetryModule(config.Configuration{}, servers)
 	if expected != actual {
 		t.Errorf("Expected '%v' but returned '%v'", expected, actual)
 	}
 
-	actual = shouldLoadOpentracingModule(configuration, servers)
+	actual = shouldLoadOpentelemetryModule(configuration, servers)
 	if expected != actual {
 		t.Errorf("Expected '%v' but returned '%v'", expected, actual)
 	}
@@ -1808,7 +1904,6 @@ func TestModSecurityForLocation(t *testing.T) {
 }
 
 func TestBuildServerName(t *testing.T) {
-
 	testCases := []struct {
 		title    string
 		hostname string
@@ -1824,89 +1919,6 @@ func TestBuildServerName(t *testing.T) {
 		result := buildServerName(testCase.hostname)
 		if result != testCase.expected {
 			t.Errorf("%v: expected '%v' but returned '%v'", testCase.title, testCase.expected, result)
-		}
-	}
-}
-
-func TestParseComplexNginxVarIntoLuaTable(t *testing.T) {
-	testCases := []struct {
-		ngxVar           string
-		expectedLuaTable string
-	}{
-		{"foo", `{ { nil, nil, nil, "foo", }, }`},
-		{"$foo", `{ { nil, nil, "foo", nil, }, }`},
-		{"${foo}", `{ { nil, "foo", nil, nil, }, }`},
-		{"\\$foo", `{ { "\$foo", nil, nil, nil, }, }`},
-		{
-			"foo\\$bar$baz${daz}xiyar$pomidor",
-			`{ { nil, nil, nil, "foo", }, { "\$bar", nil, nil, nil, }, { nil, nil, "baz", nil, }, ` +
-				`{ nil, "daz", nil, nil, }, { nil, nil, nil, "xiyar", }, { nil, nil, "pomidor", nil, }, }`,
-		},
-	}
-
-	for _, testCase := range testCases {
-		actualLuaTable := parseComplexNginxVarIntoLuaTable(testCase.ngxVar)
-		if actualLuaTable != testCase.expectedLuaTable {
-			t.Errorf("expected %v but returned %v", testCase.expectedLuaTable, actualLuaTable)
-		}
-	}
-}
-
-func TestConvertGoSliceIntoLuaTablet(t *testing.T) {
-	testCases := []struct {
-		title            string
-		goSlice          interface{}
-		emptyStringAsNil bool
-		expectedLuaTable string
-		expectedErr      error
-	}{
-		{
-			"flat string slice",
-			[]string{"one", "two", "three"},
-			false,
-			`{ "one", "two", "three", }`,
-			nil,
-		},
-		{
-			"nested string slice",
-			[][]string{{"one", "", "three"}, {"foo", "bar"}},
-			false,
-			`{ { "one", "", "three", }, { "foo", "bar", }, }`,
-			nil,
-		},
-		{
-			"converts empty string to nil when enabled",
-			[][]string{{"one", "", "three"}, {"foo", "bar"}},
-			true,
-			`{ { "one", nil, "three", }, { "foo", "bar", }, }`,
-			nil,
-		},
-		{
-			"boolean slice",
-			[]bool{true, true, false},
-			false,
-			`{ true, true, false, }`,
-			nil,
-		},
-		{
-			"integer slice",
-			[]int{4, 3, 6},
-			false,
-			`{ 4, 3, 6, }`,
-			nil,
-		},
-	}
-
-	for _, testCase := range testCases {
-		actualLuaTable, err := convertGoSliceIntoLuaTable(testCase.goSlice, testCase.emptyStringAsNil)
-		if testCase.expectedErr != nil && err != nil && testCase.expectedErr.Error() != err.Error() {
-			t.Errorf("expected error '%v' but returned '%v'", testCase.expectedErr, err)
-		}
-		if testCase.expectedErr == nil && err != nil {
-			t.Errorf("expected error to be nil but returned '%v'", err)
-		}
-		if testCase.expectedLuaTable != actualLuaTable {
-			t.Errorf("%v: expected '%v' but returned '%v'", testCase.title, testCase.expectedLuaTable, actualLuaTable)
 		}
 	}
 }

@@ -20,10 +20,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 
 	"k8s.io/ingress-nginx/test/e2e/framework"
 )
+
+const proxyRedirectToHost = "goodbye.com"
 
 var _ = framework.DescribeAnnotation("proxy-*", func() {
 	f := framework.NewDefaultFramework("proxy")
@@ -38,7 +40,7 @@ var _ = framework.DescribeAnnotation("proxy-*", func() {
 
 		annotations := make(map[string]string)
 		annotations["nginx.ingress.kubernetes.io/proxy-redirect-from"] = proxyRedirectFrom
-		annotations["nginx.ingress.kubernetes.io/proxy-redirect-to"] = "goodbye.com"
+		annotations["nginx.ingress.kubernetes.io/proxy-redirect-to"] = proxyRedirectToHost
 
 		ing := framework.NewSingleIngress(host, "/", host, f.Namespace, framework.EchoService, 80, annotations)
 		f.EnsureIngress(ing)
@@ -54,7 +56,7 @@ var _ = framework.DescribeAnnotation("proxy-*", func() {
 
 		annotations := make(map[string]string)
 		annotations["nginx.ingress.kubernetes.io/proxy-redirect-from"] = proxyRedirectFrom
-		annotations["nginx.ingress.kubernetes.io/proxy-redirect-to"] = "goodbye.com"
+		annotations["nginx.ingress.kubernetes.io/proxy-redirect-to"] = proxyRedirectToHost
 
 		ing := framework.NewSingleIngress(host, "/", host, f.Namespace, framework.EchoService, 80, annotations)
 		f.EnsureIngress(ing)
@@ -67,7 +69,7 @@ var _ = framework.DescribeAnnotation("proxy-*", func() {
 
 	ginkgo.It("should set proxy_redirect to hello.com goodbye.com", func() {
 		proxyRedirectFrom := "hello.com"
-		proxyRedirectTo := "goodbye.com"
+		proxyRedirectTo := proxyRedirectToHost
 
 		annotations := make(map[string]string)
 		annotations["nginx.ingress.kubernetes.io/proxy-redirect-from"] = proxyRedirectFrom
@@ -158,11 +160,13 @@ var _ = framework.DescribeAnnotation("proxy-*", func() {
 		proxyBuffering := "on"
 		proxyBuffersNumber := "8"
 		proxyBufferSize := "8k"
+		proxyBusyBuffersSize := "16k"
 
 		annotations := make(map[string]string)
 		annotations["nginx.ingress.kubernetes.io/proxy-buffering"] = proxyBuffering
 		annotations["nginx.ingress.kubernetes.io/proxy-buffers-number"] = proxyBuffersNumber
 		annotations["nginx.ingress.kubernetes.io/proxy-buffer-size"] = proxyBufferSize
+		annotations["nginx.ingress.kubernetes.io/proxy-busy-buffers-size"] = proxyBusyBuffersSize
 
 		ing := framework.NewSingleIngress(host, "/", host, f.Namespace, framework.EchoService, 80, annotations)
 		f.EnsureIngress(ing)
@@ -172,6 +176,7 @@ var _ = framework.DescribeAnnotation("proxy-*", func() {
 				return strings.Contains(server, fmt.Sprintf("proxy_buffering %s;", proxyBuffering)) &&
 					strings.Contains(server, fmt.Sprintf("proxy_buffer_size %s;", proxyBufferSize)) &&
 					strings.Contains(server, fmt.Sprintf("proxy_buffers %s %s;", proxyBuffersNumber, proxyBufferSize)) &&
+					strings.Contains(server, fmt.Sprintf("proxy_busy_buffers_size %s;", proxyBusyBuffersSize)) &&
 					strings.Contains(server, fmt.Sprintf("proxy_request_buffering %s;", proxyBuffering))
 			})
 	})
@@ -244,5 +249,4 @@ var _ = framework.DescribeAnnotation("proxy-*", func() {
 				return strings.Contains(server, fmt.Sprintf("proxy_http_version %s;", proxyHTTPVersion))
 			})
 	})
-
 })

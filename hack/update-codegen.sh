@@ -27,7 +27,7 @@ if [[ ! -d ${CODEGEN_PKG} ]]; then
 fi
 
 # Ensure we can execute.
-chmod +x ${CODEGEN_PKG}/generate-groups.sh
+chmod +x ${CODEGEN_PKG}/kube_codegen.sh
 
 # generate the code with:
 # --output-base    because this script should also be able to run inside the vendor dir of
@@ -37,8 +37,8 @@ chmod +x ${CODEGEN_PKG}/generate-groups.sh
 #  k8s.io/ingress-nginx/pkg/client k8s.io/ingress-nginx/pkg/apis \
 #  nginxingress:v1alpha1 \
 #  --output-base "$(dirname ${BASH_SOURCE})/../../.."
-${CODEGEN_PKG}/generate-groups.sh "deepcopy" \
-  k8s.io/ingress-nginx/internal k8s.io/ingress-nginx/internal \
+${CODEGEN_PKG}/kube_codegen.sh "deepcopy" \
+  k8s.io/ingress-nginx/internal k8s.io/ingress-nginx/pkg/apis \
   .:ingress \
   --output-base "$(dirname ${BASH_SOURCE})/../../.." \
   --go-header-file ${SCRIPT_ROOT}/hack/boilerplate/boilerplate.generated.go.txt

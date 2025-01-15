@@ -20,7 +20,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 
 	networking "k8s.io/api/networking/v1"
@@ -34,9 +34,11 @@ var _ = framework.IngressNginxDescribe("[Ingress] [PathType] mix Exact and Prefi
 		f.NewEchoDeployment()
 	})
 
-	var exactPathType = networking.PathTypeExact
+	exactPathType := networking.PathTypeExact
 
 	ginkgo.It("should choose the correct location", func() {
+		disableSnippet := f.AllowSnippetConfiguration()
+		defer disableSnippet()
 
 		host := "mixed.path"
 

@@ -1,8 +1,12 @@
 
 DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+E2E_BASE_IMAGE ?= "registry.k8s.io/ingress-nginx/e2e-test-runner:v20250112-a188f4eb@sha256:043038b1e30e5a0b64f3f919f096c5c9488ac3f617ac094b07fb9db8215f9441"
 
 image:
+	echo "..entered Makefile in /test/e2e-image"
+	echo "..calling Make target <<e2e-test-binary>> in /Makefile from inside /test/e2e-image/Makefile"
 	make -C $(DIR)/../../ e2e-test-binary
+	echo "..done building e2e-test-binary from /test/e2e-image/Makefile"
 
 	cp $(DIR)/../e2e/e2e.test .
 	cp $(DIR)/../e2e/wait-for-nginx.sh .
@@ -12,6 +16,7 @@ image:
 	cp -R $(DIR)/../../test/e2e/settings/ocsp/* .
 
 	docker build \
+		--build-arg E2E_BASE_IMAGE=$(E2E_BASE_IMAGE) \
 		--tag nginx-ingress-controller:e2e .
 
 clean:

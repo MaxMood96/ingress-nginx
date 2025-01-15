@@ -26,21 +26,23 @@ import (
 
 	"k8s.io/klog/v2"
 
-	"github.com/mitchellh/hashstructure"
+	"github.com/mitchellh/hashstructure/v2"
 	"github.com/mitchellh/mapstructure"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/ingress-nginx/internal/ingress/annotations/authreq"
+	"k8s.io/ingress-nginx/internal/ingress/annotations/customheaders"
 	"k8s.io/ingress-nginx/internal/ingress/annotations/parser"
 	"k8s.io/ingress-nginx/internal/ingress/controller/config"
 	ing_net "k8s.io/ingress-nginx/internal/net"
-	"k8s.io/ingress-nginx/internal/runtime"
+	"k8s.io/ingress-nginx/pkg/util/runtime"
 )
 
 const (
 	customHTTPErrors              = "custom-http-errors"
 	skipAccessLogUrls             = "skip-access-log-urls"
 	whitelistSourceRange          = "whitelist-source-range"
+	denylistSourceRange           = "denylist-source-range"
 	proxyRealIPCIDR               = "proxy-real-ip-cidr"
 	bindAddress                   = "bind-address"
 	httpRedirectCode              = "http-redirect-code"
@@ -53,6 +55,7 @@ const (
 	nginxStatusIpv6Whitelist      = "nginx-status-ipv6-whitelist"
 	proxyHeaderTimeout            = "proxy-protocol-header-timeout"
 	workerProcesses               = "worker-processes"
+	globalAllowedResponseHeaders  = "global-allowed-response-headers"
 	globalAuthURL                 = "global-auth-url"
 	globalAuthMethod              = "global-auth-method"
 	globalAuthSignin              = "global-auth-signin"
@@ -62,8 +65,10 @@ const (
 	globalAuthSnippet             = "global-auth-snippet"
 	globalAuthCacheKey            = "global-auth-cache-key"
 	globalAuthCacheDuration       = "global-auth-cache-duration"
+	globalAuthAlwaysSetCookie     = "global-auth-always-set-cookie"
 	luaSharedDictsKey             = "lua-shared-dicts"
-	plugins                       = "plugins"
+	debugConnections              = "debug-connections"
+	workerSerialReloads           = "enable-serial-reloads"
 )
 
 var (
@@ -77,7 +82,6 @@ var (
 		"balancer_ewma_locks":           1024,
 		"certificate_servers":           5120,
 		"ocsp_response_cache":           5120, // keep this same as certificate_servers
-		"global_throttle_cache":         10240,
 	}
 	defaultGlobalAuthRedirectParam = "rd"
 )
@@ -88,6 +92,8 @@ const (
 )
 
 // ReadConfig obtains the configuration defined by the user merged with the defaults.
+//
+//nolint:gocyclo // Ignore function complexity error
 func ReadConfig(src map[string]string) config.Configuration {
 	conf := map[string]string{}
 	// we need to copy the configmap data because the content is altered
@@ -98,6 +104,7 @@ func ReadConfig(src map[string]string) config.Configuration {
 	to := config.NewDefault()
 	errors := make([]int, 0)
 	skipUrls := make([]string, 0)
+	denyList := make([]string, 0)
 	whiteList := make([]string, 0)
 	proxyList := make([]string, 0)
 	hideHeadersList := make([]string, 0)
@@ -109,15 +116,20 @@ func ReadConfig(src map[string]string) config.Configuration {
 	blockUserAgentList := make([]string, 0)
 	blockRefererList := make([]string, 0)
 	responseHeaders := make([]string, 0)
+	allowedResponseHeaders := make([]string, 0)
 	luaSharedDicts := make(map[string]int)
+	debugConnectionsList := make([]string, 0)
 
-	//parse lua shared dict values
+	// parse lua shared dict values
 	if val, ok := conf[luaSharedDictsKey]; ok {
 		delete(conf, luaSharedDictsKey)
 		lsd := splitAndTrimSpace(val, ",")
 		for _, v := range lsd {
-			v = strings.Replace(v, " ", "", -1)
-			results := strings.SplitN(v, ":", 2)
+			results := strings.SplitN(strings.ReplaceAll(v, " ", ""), ":", 2)
+			if len(results) != 2 {
+				klog.Errorf("Ignoring poorly formatted Lua dictionary %v", v)
+				continue
+			}
 			dictName := results[0]
 			size := dictStrToKb(results[1])
 			if size < 0 {
@@ -166,6 +178,11 @@ func ReadConfig(src map[string]string) config.Configuration {
 		skipUrls = splitAndTrimSpace(val, ",")
 	}
 
+	if val, ok := conf[denylistSourceRange]; ok {
+		delete(conf, denylistSourceRange)
+		denyList = append(denyList, splitAndTrimSpace(val, ",")...)
+	}
+
 	if val, ok := conf[whitelistSourceRange]; ok {
 		delete(conf, whitelistSourceRange)
 		whiteList = append(whiteList, splitAndTrimSpace(val, ",")...)
@@ -186,7 +203,7 @@ func ReadConfig(src map[string]string) config.Configuration {
 				if ing_net.IsIPV6(ns) {
 					bindAddressIpv6List = append(bindAddressIpv6List, fmt.Sprintf("[%v]", ns))
 				} else {
-					bindAddressIpv4List = append(bindAddressIpv4List, fmt.Sprintf("%v", ns))
+					bindAddressIpv4List = append(bindAddressIpv4List, ns.String())
 				}
 			} else {
 				klog.Warningf("%v is not a valid textual representation of an IP address", i)
@@ -236,11 +253,27 @@ func ReadConfig(src map[string]string) config.Configuration {
 		}
 	}
 
+	// Verify that the configured global external authorization response headers are valid. if not, set the default value
+	if val, ok := conf[globalAllowedResponseHeaders]; ok {
+		delete(conf, globalAllowedResponseHeaders)
+
+		if val != "" {
+			harr := splitAndTrimSpace(val, ",")
+			for _, header := range harr {
+				if !customheaders.ValidHeader(header) {
+					klog.Warningf("Global allowed response headers denied - %s.", header)
+				} else {
+					allowedResponseHeaders = append(allowedResponseHeaders, header)
+				}
+			}
+		}
+	}
+
 	// Verify that the configured global external authorization method is a valid HTTP method. if not, set the default value
 	if val, ok := conf[globalAuthMethod]; ok {
 		delete(conf, globalAuthMethod)
 
-		if len(val) != 0 && !authreq.ValidMethod(val) {
+		if val != "" && !authreq.ValidMethod(val) {
 			klog.Warningf("Global auth location denied - %v.", "invalid HTTP method")
 		} else {
 			to.GlobalExternalAuth.Method = val
@@ -251,7 +284,10 @@ func ReadConfig(src map[string]string) config.Configuration {
 	if val, ok := conf[globalAuthSignin]; ok {
 		delete(conf, globalAuthSignin)
 
-		signinURL, _ := parser.StringToURL(val)
+		signinURL, err := parser.StringToURL(val)
+		if err != nil {
+			klog.Errorf("string to URL conversion failed: %v", err)
+		}
 		if signinURL == nil {
 			klog.Warningf("Global auth location denied - %v.", "global-auth-signin setting is undefined and will not be set")
 		} else {
@@ -264,7 +300,10 @@ func ReadConfig(src map[string]string) config.Configuration {
 		delete(conf, globalAuthSigninRedirectParam)
 
 		redirectParam := strings.TrimSpace(val)
-		dummySigninURL, _ := parser.StringToURL(fmt.Sprintf("%s?%s=dummy", to.GlobalExternalAuth.SigninURL, redirectParam))
+		dummySigninURL, err := parser.StringToURL(fmt.Sprintf("%s?%s=dummy", to.GlobalExternalAuth.SigninURL, redirectParam))
+		if err != nil {
+			klog.Errorf("string to URL conversion failed: %v", err)
+		}
 		if dummySigninURL == nil {
 			klog.Warningf("Global auth redirect parameter denied - %v.", "global-auth-signin-redirect-param setting is invalid and will not be set")
 		} else {
@@ -276,7 +315,7 @@ func ReadConfig(src map[string]string) config.Configuration {
 	if val, ok := conf[globalAuthResponseHeaders]; ok {
 		delete(conf, globalAuthResponseHeaders)
 
-		if len(val) != 0 {
+		if val != "" {
 			harr := splitAndTrimSpace(val, ",")
 			for _, header := range harr {
 				if !authreq.ValidHeader(header) {
@@ -313,6 +352,16 @@ func ReadConfig(src map[string]string) config.Configuration {
 			klog.Warningf("Global auth location denied - %s", err)
 		}
 		to.GlobalExternalAuth.AuthCacheDuration = cacheDurations
+	}
+
+	if val, ok := conf[globalAuthAlwaysSetCookie]; ok {
+		delete(conf, globalAuthAlwaysSetCookie)
+
+		alwaysSetCookie, err := strconv.ParseBool(val)
+		if err != nil {
+			klog.Warningf("Global auth location denied - %s", fmt.Errorf("cannot convert %s to bool: %v", globalAuthAlwaysSetCookie, err))
+		}
+		to.GlobalExternalAuth.AlwaysSetCookie = alwaysSetCookie
 	}
 
 	// Verify that the configured timeout is parsable as a duration. if not, set the default value
@@ -357,13 +406,38 @@ func ReadConfig(src map[string]string) config.Configuration {
 		delete(conf, workerProcesses)
 	}
 
-	if val, ok := conf[plugins]; ok {
-		to.Plugins = splitAndTrimSpace(val, ",")
-		delete(conf, plugins)
+	if val, ok := conf[workerSerialReloads]; ok {
+		boolVal, err := strconv.ParseBool(val)
+		if err != nil {
+			to.WorkerSerialReloads = false
+			klog.Warningf("failed to parse enable-serial-reloads setting, valid values are true or false, found %s", val)
+		} else {
+			to.WorkerSerialReloads = boolVal
+		}
+		delete(conf, workerSerialReloads)
+	}
+
+	if val, ok := conf[debugConnections]; ok {
+		delete(conf, debugConnections)
+		for _, i := range splitAndTrimSpace(val, ",") {
+			validIP := net.ParseIP(i)
+			if validIP != nil {
+				debugConnectionsList = append(debugConnectionsList, i)
+			} else {
+				_, _, err := net.ParseCIDR(i)
+				if err == nil {
+					debugConnectionsList = append(debugConnectionsList, i)
+				} else {
+					klog.Warningf("%v is not a valid IP or CIDR address", i)
+				}
+			}
+		}
+		to.DebugConnections = debugConnectionsList
 	}
 
 	to.CustomHTTPErrors = filterErrors(errors)
 	to.SkipAccessLogURLs = skipUrls
+	to.DenylistSourceRange = denyList
 	to.WhitelistSourceRange = whiteList
 	to.ProxyRealIPCIDR = proxyList
 	to.BindAddressIpv4 = bindAddressIpv4List
@@ -375,15 +449,16 @@ func ReadConfig(src map[string]string) config.Configuration {
 	to.ProxyStreamResponses = streamResponses
 	to.DisableIpv6DNS = !ing_net.IsIPv6Enabled()
 	to.LuaSharedDicts = luaSharedDicts
+	to.Backend.AllowedResponseHeaders = allowedResponseHeaders
 
-	config := &mapstructure.DecoderConfig{
+	decoderConfig := &mapstructure.DecoderConfig{
 		Metadata:         nil,
 		WeaklyTypedInput: true,
 		Result:           &to,
 		TagName:          "json",
 	}
 
-	decoder, err := mapstructure.NewDecoder(config)
+	decoder, err := mapstructure.NewDecoder(decoderConfig)
 	if err != nil {
 		klog.Warningf("unexpected error merging defaults: %v", err)
 	}
@@ -392,7 +467,7 @@ func ReadConfig(src map[string]string) config.Configuration {
 		klog.Warningf("unexpected error merging defaults: %v", err)
 	}
 
-	hash, err := hashstructure.Hash(to, &hashstructure.HashOptions{
+	hash, err := hashstructure.Hash(to, hashstructure.FormatV1, &hashstructure.HashOptions{
 		TagName: "json",
 	})
 	if err != nil {
@@ -417,6 +492,7 @@ func filterErrors(codes []int) []int {
 	return fa
 }
 
+//nolint:unparam // Ignore `sep` always receives `,` error
 func splitAndTrimSpace(s, sep string) []string {
 	f := func(c rune) bool {
 		return strings.EqualFold(string(c), sep)
@@ -435,8 +511,11 @@ func dictStrToKb(sizeStr string) int {
 	if sizeMatch == nil {
 		return -1
 	}
-	size, _ := strconv.Atoi(sizeMatch[1]) // validated already with regex
-	if sizeMatch[2] == "" || strings.ToLower(sizeMatch[2]) == "m" {
+	size, err := strconv.Atoi(sizeMatch[1]) // validated already with regex
+	if err != nil {
+		klog.Errorf("unexpected error converting size string %s to int: %v", sizeStr, err)
+	}
+	if sizeMatch[2] == "" || strings.EqualFold(sizeMatch[2], "m") {
 		size *= 1024
 	}
 	return size
