@@ -22,11 +22,13 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 
 	"k8s.io/ingress-nginx/test/e2e/framework"
 )
+
+const sslRedirectValue = "false"
 
 var _ = framework.DescribeAnnotation("affinitymode", func() {
 	f := framework.NewDefaultFramework("affinity")
@@ -42,10 +44,10 @@ var _ = framework.DescribeAnnotation("affinitymode", func() {
 		host := "affinity-mode-balance.com"
 		annotations := make(map[string]string)
 		annotations["nginx.ingress.kubernetes.io/affinity"] = "cookie"
-		annotations["ginx.ingress.kubernetes.io/session-cookie-name"] = "hello-cookie"
+		annotations["nginx.ingress.kubernetes.io/session-cookie-name"] = "hello-cookie"
 		annotations["nginx.ingress.kubernetes.io/session-cookie-expires"] = "172800"
 		annotations["nginx.ingress.kubernetes.io/session-cookie-max-age"] = "172800"
-		annotations["nginx.ingress.kubernetes.io/ssl-redirect"] = "false"
+		annotations["nginx.ingress.kubernetes.io/ssl-redirect"] = sslRedirectValue
 		annotations["nginx.ingress.kubernetes.io/affinity-mode"] = "balanced"
 		annotations["nginx.ingress.kubernetes.io/session-cookie-hash"] = "sha1"
 
@@ -75,10 +77,10 @@ var _ = framework.DescribeAnnotation("affinitymode", func() {
 		host := "affinity-mode-persistent.com"
 		annotations := make(map[string]string)
 		annotations["nginx.ingress.kubernetes.io/affinity"] = "cookie"
-		annotations["ginx.ingress.kubernetes.io/session-cookie-name"] = "hello-cookie"
+		annotations["nginx.ingress.kubernetes.io/session-cookie-name"] = "hello-cookie"
 		annotations["nginx.ingress.kubernetes.io/session-cookie-expires"] = "172800"
 		annotations["nginx.ingress.kubernetes.io/session-cookie-max-age"] = "172800"
-		annotations["nginx.ingress.kubernetes.io/ssl-redirect"] = "false"
+		annotations["nginx.ingress.kubernetes.io/ssl-redirect"] = sslRedirectValue
 		annotations["nginx.ingress.kubernetes.io/affinity-mode"] = "persistent"
 		annotations["nginx.ingress.kubernetes.io/session-cookie-hash"] = "sha1"
 
@@ -106,7 +108,7 @@ var _ = framework.DescribeAnnotation("affinitymode", func() {
 		// Send new requests and add new backends. Check which backend responded to the sent request
 		cookies := getCookiesFromHeader(response.Header("Set-Cookie").Raw())
 		for sendRequestNumber := 0; sendRequestNumber < 10; sendRequestNumber++ {
-			replicas = replicas + 1
+			replicas++
 			err := framework.UpdateDeployment(f.KubeClientSet, f.Namespace, deploymentName, replicas, nil)
 			assert.Nil(ginkgo.GinkgoT(), err)
 			framework.Sleep()
@@ -125,7 +127,7 @@ var _ = framework.DescribeAnnotation("affinitymode", func() {
 		framework.Sleep()
 
 		// validate, there is no backend to serve the request
-		response = request.WithCookies(cookies).Expect().Status(http.StatusServiceUnavailable)
+		request.WithCookies(cookies).Expect().Status(http.StatusServiceUnavailable)
 
 		// create brand new backends
 		replicas = 2

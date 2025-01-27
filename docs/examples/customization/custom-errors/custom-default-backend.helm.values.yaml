@@ -1,11 +1,12 @@
 controller:
-  custom-http-errors: "404,503"
+  config:
+    custom-http-errors: "404,503"
 defaultBackend:
   enabled: true
   image:
-    registry: k8s.gcr.io
-    image: ingress-nginx/nginx-errors
-    tag: "0.48.1"
+    registry: registry.k8s.io
+    image: ingress-nginx/custom-error-pages
+    tag: v1.1.1@sha256:8c10776191ae44b5c387b8c7696d8bc17ceec90d7184a3a38b89ac8434b6c56b
   extraVolumes:
   - name: custom-error-pages
     configMap:

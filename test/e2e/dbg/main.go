@@ -20,7 +20,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 
 	"k8s.io/ingress-nginx/test/e2e/framework"
@@ -49,7 +49,7 @@ var _ = framework.IngressNginxDescribe("Debug CLI", func() {
 		assert.Nil(ginkgo.GinkgoT(), err)
 
 		// Should be 2: the default and the echo deployment
-		numUpstreams := len(strings.Split(strings.Trim(string(output), "\n"), "\n"))
+		numUpstreams := len(strings.Split(strings.Trim(output, "\n"), "\n"))
 		assert.Equal(ginkgo.GinkgoT(), numUpstreams, 2)
 	})
 
@@ -67,7 +67,7 @@ var _ = framework.IngressNginxDescribe("Debug CLI", func() {
 		output, err := f.ExecIngressPod(cmd)
 		assert.Nil(ginkgo.GinkgoT(), err)
 
-		backends := strings.Split(string(output), "\n")
+		backends := strings.Split(output, "\n")
 		assert.Greater(ginkgo.GinkgoT(), len(backends), 0)
 
 		getCmd := "/dbg backends get " + backends[0]
