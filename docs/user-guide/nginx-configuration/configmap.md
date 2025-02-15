@@ -25,191 +25,206 @@ data:
 
 The following table shows a configuration option's name, type, and the default value:
 
-|name|type|default|
-|:---|:---|:------|
-|[add-headers](#add-headers)|string|""|
-|[allow-backend-server-header](#allow-backend-server-header)|bool|"false"|
-|[allow-snippet-annotations](#allow-snippet-annotations)|bool|true|
-|[annotation-value-word-blocklist](#annotation-value-word-blocklist)|string array|""|
-|[hide-headers](#hide-headers)|string array|empty|
-|[access-log-params](#access-log-params)|string|""|
-|[access-log-path](#access-log-path)|string|"/var/log/nginx/access.log"|
-|[http-access-log-path](#http-access-log-path)|string|""|
-|[stream-access-log-path](#stream-access-log-path)|string|""|
-|[enable-access-log-for-default-backend](#enable-access-log-for-default-backend)|bool|"false"|
-|[error-log-path](#error-log-path)|string|"/var/log/nginx/error.log"|
-|[enable-modsecurity](#enable-modsecurity)|bool|"false"|
-|[modsecurity-snippet](#modsecurity-snippet)|string|""|
-|[enable-owasp-modsecurity-crs](#enable-owasp-modsecurity-crs)|bool|"false"|
-|[client-header-buffer-size](#client-header-buffer-size)|string|"1k"|
-|[client-header-timeout](#client-header-timeout)|int|60|
-|[client-body-buffer-size](#client-body-buffer-size)|string|"8k"|
-|[client-body-timeout](#client-body-timeout)|int|60|
-|[disable-access-log](#disable-access-log)|bool|false|
-|[disable-ipv6](#disable-ipv6)|bool|false|
-|[disable-ipv6-dns](#disable-ipv6-dns)|bool|false|
-|[enable-underscores-in-headers](#enable-underscores-in-headers)|bool|false|
-|[enable-ocsp](#enable-ocsp)|bool|false|
-|[ignore-invalid-headers](#ignore-invalid-headers)|bool|true|
-|[retry-non-idempotent](#retry-non-idempotent)|bool|"false"|
-|[error-log-level](#error-log-level)|string|"notice"|
-|[http2-max-field-size](#http2-max-field-size)|string|"4k"|
-|[http2-max-header-size](#http2-max-header-size)|string|"16k"|
-|[http2-max-requests](#http2-max-requests)|int|1000|
-|[http2-max-concurrent-streams](#http2-max-concurrent-streams)|int|128|
-|[hsts](#hsts)|bool|"true"|
-|[hsts-include-subdomains](#hsts-include-subdomains)|bool|"true"|
-|[hsts-max-age](#hsts-max-age)|string|"15724800"|
-|[hsts-preload](#hsts-preload)|bool|"false"|
-|[keep-alive](#keep-alive)|int|75|
-|[keep-alive-requests](#keep-alive-requests)|int|100|
-|[large-client-header-buffers](#large-client-header-buffers)|string|"4 8k"|
-|[log-format-escape-json](#log-format-escape-json)|bool|"false"|
-|[log-format-upstream](#log-format-upstream)|string|`$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" $request_length $request_time [$proxy_upstream_name] [$proxy_alternative_upstream_name] $upstream_addr $upstream_response_length $upstream_response_time $upstream_status $req_id`|
-|[log-format-stream](#log-format-stream)|string|`[$remote_addr] [$time_local] $protocol $status $bytes_sent $bytes_received $session_time`|
-|[enable-multi-accept](#enable-multi-accept)|bool|"true"|
-|[max-worker-connections](#max-worker-connections)|int|16384|
-|[max-worker-open-files](#max-worker-open-files)|int|0|
-|[map-hash-bucket-size](#max-hash-bucket-size)|int|64|
-|[nginx-status-ipv4-whitelist](#nginx-status-ipv4-whitelist)|[]string|"127.0.0.1"|
-|[nginx-status-ipv6-whitelist](#nginx-status-ipv6-whitelist)|[]string|"::1"|
-|[proxy-real-ip-cidr](#proxy-real-ip-cidr)|[]string|"0.0.0.0/0"|
-|[proxy-set-headers](#proxy-set-headers)|string|""|
-|[server-name-hash-max-size](#server-name-hash-max-size)|int|1024|
-|[server-name-hash-bucket-size](#server-name-hash-bucket-size)|int|`<size of the processor’s cache line>`
-|[proxy-headers-hash-max-size](#proxy-headers-hash-max-size)|int|512|
-|[proxy-headers-hash-bucket-size](#proxy-headers-hash-bucket-size)|int|64|
-|[plugins](#plugins)|[]string| |
-|[reuse-port](#reuse-port)|bool|"true"|
-|[server-tokens](#server-tokens)|bool|"false"|
-|[ssl-ciphers](#ssl-ciphers)|string|"ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384"|
-|[ssl-ecdh-curve](#ssl-ecdh-curve)|string|"auto"|
-|[ssl-dh-param](#ssl-dh-param)|string|""|
-|[ssl-protocols](#ssl-protocols)|string|"TLSv1.2 TLSv1.3"|
-|[ssl-session-cache](#ssl-session-cache)|bool|"true"|
-|[ssl-session-cache-size](#ssl-session-cache-size)|string|"10m"|
-|[ssl-session-tickets](#ssl-session-tickets)|bool|"false"|
-|[ssl-session-ticket-key](#ssl-session-ticket-key)|string|`<Randomly Generated>`
-|[ssl-session-timeout](#ssl-session-timeout)|string|"10m"|
-|[ssl-buffer-size](#ssl-buffer-size)|string|"4k"|
-|[use-proxy-protocol](#use-proxy-protocol)|bool|"false"|
-|[proxy-protocol-header-timeout](#proxy-protocol-header-timeout)|string|"5s"|
-|[use-gzip](#use-gzip)|bool|"false"|
-|[use-geoip](#use-geoip)|bool|"true"|
-|[use-geoip2](#use-geoip2)|bool|"false"|
-|[enable-brotli](#enable-brotli)|bool|"false"|
-|[brotli-level](#brotli-level)|int|4|
-|[brotli-min-length](#brotli-min-length)|int|20|
-|[brotli-types](#brotli-types)|string|"application/xml+rss application/atom+xml application/javascript application/x-javascript application/json application/rss+xml application/vnd.ms-fontobject application/x-font-ttf application/x-web-app-manifest+json application/xhtml+xml application/xml font/opentype image/svg+xml image/x-icon text/css text/javascript text/plain text/x-component"|
-|[use-http2](#use-http2)|bool|"true"|
-|[gzip-level](#gzip-level)|int|1|
-|[gzip-types](#gzip-types)|string|"application/atom+xml application/javascript application/x-javascript application/json application/rss+xml application/vnd.ms-fontobject application/x-font-ttf application/x-web-app-manifest+json application/xhtml+xml application/xml font/opentype image/svg+xml image/x-icon text/css text/javascript text/plain text/x-component"|
-|[worker-processes](#worker-processes)|string|`<Number of CPUs>`|
-|[worker-cpu-affinity](#worker-cpu-affinity)|string|""|
-|[worker-shutdown-timeout](#worker-shutdown-timeout)|string|"240s"|
-|[load-balance](#load-balance)|string|"round_robin"|
-|[variables-hash-bucket-size](#variables-hash-bucket-size)|int|128|
-|[variables-hash-max-size](#variables-hash-max-size)|int|2048|
-|[upstream-keepalive-connections](#upstream-keepalive-connections)|int|320|
-|[upstream-keepalive-timeout](#upstream-keepalive-timeout)|int|60|
-|[upstream-keepalive-requests](#upstream-keepalive-requests)|int|10000|
-|[limit-conn-zone-variable](#limit-conn-zone-variable)|string|"$binary_remote_addr"|
-|[proxy-stream-timeout](#proxy-stream-timeout)|string|"600s"|
-|[proxy-stream-next-upstream](#proxy-stream-next-upstream)|bool|"true"|
-|[proxy-stream-next-upstream-timeout](#proxy-stream-next-upstream-timeout)|string|"600s"|
-|[proxy-stream-next-upstream-tries](#proxy-stream-next-upstream-tries)|int|3|
-|[proxy-stream-responses](#proxy-stream-responses)|int|1|
-|[bind-address](#bind-address)|[]string|""|
-|[use-forwarded-headers](#use-forwarded-headers)|bool|"false"|
-|[enable-real-ip](#enable-real-ip)|bool|"false"|
-|[forwarded-for-header](#forwarded-for-header)|string|"X-Forwarded-For"|
-|[compute-full-forwarded-for](#compute-full-forwarded-for)|bool|"false"|
-|[proxy-add-original-uri-header](#proxy-add-original-uri-header)|bool|"false"|
-|[generate-request-id](#generate-request-id)|bool|"true"|
-|[enable-opentracing](#enable-opentracing)|bool|"false"|
-|[opentracing-operation-name](#opentracing-operation-name)|string|""|
-|[opentracing-location-operation-name](#opentracing-location-operation-name)|string|""|
-|[zipkin-collector-host](#zipkin-collector-host)|string|""|
-|[zipkin-collector-port](#zipkin-collector-port)|int|9411|
-|[zipkin-service-name](#zipkin-service-name)|string|"nginx"|
-|[zipkin-sample-rate](#zipkin-sample-rate)|float|1.0|
-|[jaeger-collector-host](#jaeger-collector-host)|string|""|
-|[jaeger-collector-port](#jaeger-collector-port)|int|6831|
-|[jaeger-endpoint](#jaeger-endpoint)|string|""|
-|[jaeger-service-name](#jaeger-service-name)|string|"nginx"|
-|[jaeger-propagation-format](#jaeger-propagation-format)|string|"jaeger"|
-|[jaeger-sampler-type](#jaeger-sampler-type)|string|"const"|
-|[jaeger-sampler-param](#jaeger-sampler-param)|string|"1"|
-|[jaeger-sampler-host](#jaeger-sampler-host)|string|"http://127.0.0.1"|
-|[jaeger-sampler-port](#jaeger-sampler-port)|int|5778|
-|[jaeger-trace-context-header-name](#jaeger-trace-context-header-name)|string|uber-trace-id|
-|[jaeger-debug-header](#jaeger-debug-header)|string|uber-debug-id|
-|[jaeger-baggage-header](#jaeger-baggage-header)|string|jaeger-baggage|
-|[jaeger-trace-baggage-header-prefix](#jaeger-trace-baggage-header-prefix)|string|uberctx-|
-|[datadog-collector-host](#datadog-collector-host)|string|""|
-|[datadog-collector-port](#datadog-collector-port)|int|8126|
-|[datadog-service-name](#datadog-service-name)|string|"nginx"|
-|[datadog-environment](#datadog-environment)|string|"prod"|
-|[datadog-operation-name-override](#datadog-operation-name-override)|string|"nginx.handle"|
-|[datadog-priority-sampling](#datadog-priority-sampling)|bool|"true"|
-|[datadog-sample-rate](#datadog-sample-rate)|float|1.0|
-|[main-snippet](#main-snippet)|string|""|
-|[http-snippet](#http-snippet)|string|""|
-|[server-snippet](#server-snippet)|string|""|
-|[stream-snippet](#stream-snippet)|string|""|
-|[location-snippet](#location-snippet)|string|""|
-|[custom-http-errors](#custom-http-errors)|[]int|[]int{}|
-|[proxy-body-size](#proxy-body-size)|string|"1m"|
-|[proxy-connect-timeout](#proxy-connect-timeout)|int|5|
-|[proxy-read-timeout](#proxy-read-timeout)|int|60|
-|[proxy-send-timeout](#proxy-send-timeout)|int|60|
-|[proxy-buffers-number](#proxy-buffers-number)|int|4|
-|[proxy-buffer-size](#proxy-buffer-size)|string|"4k"|
-|[proxy-cookie-path](#proxy-cookie-path)|string|"off"|
-|[proxy-cookie-domain](#proxy-cookie-domain)|string|"off"|
-|[proxy-next-upstream](#proxy-next-upstream)|string|"error timeout"|
-|[proxy-next-upstream-timeout](#proxy-next-upstream-timeout)|int|0|
-|[proxy-next-upstream-tries](#proxy-next-upstream-tries)|int|3|
-|[proxy-redirect-from](#proxy-redirect-from)|string|"off"|
-|[proxy-request-buffering](#proxy-request-buffering)|string|"on"|
-|[ssl-redirect](#ssl-redirect)|bool|"true"|
-|[force-ssl-redirect](#force-ssl-redirect)|bool|"false"|
-|[whitelist-source-range](#whitelist-source-range)|[]string|[]string{}|
-|[skip-access-log-urls](#skip-access-log-urls)|[]string|[]string{}|
-|[limit-rate](#limit-rate)|int|0|
-|[limit-rate-after](#limit-rate-after)|int|0|
-|[lua-shared-dicts](#lua-shared-dicts)|string|""|
-|[http-redirect-code](#http-redirect-code)|int|308|
-|[proxy-buffering](#proxy-buffering)|string|"off"|
-|[limit-req-status-code](#limit-req-status-code)|int|503|
-|[limit-conn-status-code](#limit-conn-status-code)|int|503|
-|[enable-syslog](#enable-syslog)|bool|false|
-|[syslog-host](#syslog-host)|string|""|
-|[syslog-port](#syslog-port)|int|514|
-|[no-tls-redirect-locations](#no-tls-redirect-locations)|string|"/.well-known/acme-challenge"|
-|[global-auth-url](#global-auth-url)|string|""|
-|[global-auth-method](#global-auth-method)|string|""|
-|[global-auth-signin](#global-auth-signin)|string|""|
-|[global-auth-signin-redirect-param](#global-auth-signin-redirect-param)|string|"rd"|
-|[global-auth-response-headers](#global-auth-response-headers)|string|""|
-|[global-auth-request-redirect](#global-auth-request-redirect)|string|""|
-|[global-auth-snippet](#global-auth-snippet)|string|""|
-|[global-auth-cache-key](#global-auth-cache-key)|string|""|
-|[global-auth-cache-duration](#global-auth-cache-duration)|string|"200 202 401 5m"|
-|[no-auth-locations](#no-auth-locations)|string|"/.well-known/acme-challenge"|
-|[block-cidrs](#block-cidrs)|[]string|""|
-|[block-user-agents](#block-user-agents)|[]string|""|
-|[block-referers](#block-referers)|[]string|""|
-|[proxy-ssl-location-only](#proxy-ssl-location-only)|bool|"false"|
-|[default-type](#default-type)|string|"text/html"|
-|[global-rate-limit-memcached-host](#global-rate-limit)|string|""|
-|[global-rate-limit-memcached-port](#global-rate-limit)|int|11211|
-|[global-rate-limit-memcached-connect-timeout](#global-rate-limit)|int|50|
-|[global-rate-limit-memcached-max-idle-timeout](#global-rate-limit)|int|10000|
-|[global-rate-limit-memcached-pool-size](#global-rate-limit)|int|50|
-|[global-rate-limit-status-code](#global-rate-limit)|int|429|
-|[service-upstream](#service-upstream)|bool|"false"|
-|[ssl-reject-handshake](#ssl-reject-handshake)|bool|"false"|
+| name                                                                            | type         | default                                                                                                                                                                                                                                                                                                                                                      | notes                                                                               |
+|:--------------------------------------------------------------------------------|:-------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:------------------------------------------------------------------------------------|
+| [add-headers](#add-headers)                                                     | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [allow-backend-server-header](#allow-backend-server-header)                     | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [allow-cross-namespace-resources](#allow-cross-namespace-resources)             | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [allow-snippet-annotations](#allow-snippet-annotations)                         | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [annotations-risk-level](#annotations-risk-level)                               | string       | High                                                                                                                                                                                                                                                                                                                                                         |                                                                                     |
+| [annotation-value-word-blocklist](#annotation-value-word-blocklist)             | string array | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [hide-headers](#hide-headers)                                                   | string array | empty                                                                                                                                                                                                                                                                                                                                                        |                                                                                     |
+| [access-log-params](#access-log-params)                                         | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [access-log-path](#access-log-path)                                             | string       | "/var/log/nginx/access.log"                                                                                                                                                                                                                                                                                                                                  |                                                                                     |
+| [http-access-log-path](#http-access-log-path)                                   | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [stream-access-log-path](#stream-access-log-path)                               | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [enable-access-log-for-default-backend](#enable-access-log-for-default-backend) | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [error-log-path](#error-log-path)                                               | string       | "/var/log/nginx/error.log"                                                                                                                                                                                                                                                                                                                                   |                                                                                     |
+| [enable-modsecurity](#enable-modsecurity)                                       | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [modsecurity-snippet](#modsecurity-snippet)                                     | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [enable-owasp-modsecurity-crs](#enable-owasp-modsecurity-crs)                   | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [client-header-buffer-size](#client-header-buffer-size)                         | string       | "1k"                                                                                                                                                                                                                                                                                                                                                         |                                                                                     |
+| [client-header-timeout](#client-header-timeout)                                 | int          | 60                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [client-body-buffer-size](#client-body-buffer-size)                             | string       | "8k"                                                                                                                                                                                                                                                                                                                                                         |                                                                                     |
+| [client-body-timeout](#client-body-timeout)                                     | int          | 60                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [disable-access-log](#disable-access-log)                                       | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [disable-ipv6](#disable-ipv6)                                                   | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [disable-ipv6-dns](#disable-ipv6-dns)                                           | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [enable-underscores-in-headers](#enable-underscores-in-headers)                 | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [enable-ocsp](#enable-ocsp)                                                     | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [ignore-invalid-headers](#ignore-invalid-headers)                               | bool         | "true"                                                                                                                                                                                                                                                                                                                                                       |                                                                                     |
+| [retry-non-idempotent](#retry-non-idempotent)                                   | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [error-log-level](#error-log-level)                                             | string       | "notice"                                                                                                                                                                                                                                                                                                                                                     |                                                                                     |
+| [http2-max-field-size](#http2-max-field-size)                                   | string       | ""                                                                                                                                                                                                                                                                                                                                                           | DEPRECATED in favour of [large_client_header_buffers](#large-client-header-buffers) |
+| [http2-max-header-size](#http2-max-header-size)                                 | string       | ""                                                                                                                                                                                                                                                                                                                                                           | DEPRECATED in favour of [large_client_header_buffers](#large-client-header-buffers) |
+| [http2-max-requests](#http2-max-requests)                                       | int          | 0                                                                                                                                                                                                                                                                                                                                                            | DEPRECATED in favour of [keepalive_requests](#keepalive-requests)                   |
+| [http2-max-concurrent-streams](#http2-max-concurrent-streams)                   | int          | 128                                                                                                                                                                                                                                                                                                                                                          |                                                                                     |
+| [hsts](#hsts)                                                                   | bool         | "true"                                                                                                                                                                                                                                                                                                                                                       |                                                                                     |
+| [hsts-include-subdomains](#hsts-include-subdomains)                             | bool         | "true"                                                                                                                                                                                                                                                                                                                                                       |                                                                                     |
+| [hsts-max-age](#hsts-max-age)                                                   | string       | "31536000"                                                                                                                                                                                                                                                                                                                                                   |                                                                                     |
+| [hsts-preload](#hsts-preload)                                                   | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [keep-alive](#keep-alive)                                                       | int          | 75                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [keep-alive-requests](#keep-alive-requests)                                     | int          | 1000                                                                                                                                                                                                                                                                                                                                                         |                                                                                     |
+| [large-client-header-buffers](#large-client-header-buffers)                     | string       | "4 8k"                                                                                                                                                                                                                                                                                                                                                       |                                                                                     |
+| [log-format-escape-none](#log-format-escape-none)                               | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [log-format-escape-json](#log-format-escape-json)                               | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [log-format-upstream](#log-format-upstream)                                     | string       | `$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" $request_length $request_time [$proxy_upstream_name] [$proxy_alternative_upstream_name] $upstream_addr $upstream_response_length $upstream_response_time $upstream_status $req_id`                                                         |                                                                                     |
+| [log-format-stream](#log-format-stream)                                         | string       | `[$remote_addr] [$time_local] $protocol $status $bytes_sent $bytes_received $session_time`                                                                                                                                                                                                                                                                   |                                                                                     |
+| [enable-multi-accept](#enable-multi-accept)                                     | bool         | "true"                                                                                                                                                                                                                                                                                                                                                       |                                                                                     |
+| [max-worker-connections](#max-worker-connections)                               | int          | 16384                                                                                                                                                                                                                                                                                                                                                        |                                                                                     |
+| [max-worker-open-files](#max-worker-open-files)                                 | int          | 0                                                                                                                                                                                                                                                                                                                                                            |                                                                                     |
+| [map-hash-bucket-size](#max-hash-bucket-size)                                   | int          | 64                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [nginx-status-ipv4-whitelist](#nginx-status-ipv4-whitelist)                     | []string     | "127.0.0.1"                                                                                                                                                                                                                                                                                                                                                  |                                                                                     |
+| [nginx-status-ipv6-whitelist](#nginx-status-ipv6-whitelist)                     | []string     | "::1"                                                                                                                                                                                                                                                                                                                                                        |                                                                                     |
+| [proxy-real-ip-cidr](#proxy-real-ip-cidr)                                       | []string     | "0.0.0.0/0"                                                                                                                                                                                                                                                                                                                                                  |                                                                                     |
+| [proxy-set-headers](#proxy-set-headers)                                         | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [server-name-hash-max-size](#server-name-hash-max-size)                         | int          | 1024                                                                                                                                                                                                                                                                                                                                                         |                                                                                     |
+| [server-name-hash-bucket-size](#server-name-hash-bucket-size)                   | int          | `<size of the processor’s cache line>`                                                                                                                                                                                                                                                                                                                       |
+| [proxy-headers-hash-max-size](#proxy-headers-hash-max-size)                     | int          | 512                                                                                                                                                                                                                                                                                                                                                          |                                                                                     |
+| [proxy-headers-hash-bucket-size](#proxy-headers-hash-bucket-size)               | int          | 64                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [reuse-port](#reuse-port)                                                       | bool         | "true"                                                                                                                                                                                                                                                                                                                                                       |                                                                                     |
+| [server-tokens](#server-tokens)                                                 | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [ssl-ciphers](#ssl-ciphers)                                                     | string       | "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384"                                                                                                                          |                                                                                     |
+| [ssl-ecdh-curve](#ssl-ecdh-curve)                                               | string       | "auto"                                                                                                                                                                                                                                                                                                                                                       |                                                                                     |
+| [ssl-dh-param](#ssl-dh-param)                                                   | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [ssl-protocols](#ssl-protocols)                                                 | string       | "TLSv1.2 TLSv1.3"                                                                                                                                                                                                                                                                                                                                            |                                                                                     |
+| [ssl-session-cache](#ssl-session-cache)                                         | bool         | "true"                                                                                                                                                                                                                                                                                                                                                       |                                                                                     |
+| [ssl-session-cache-size](#ssl-session-cache-size)                               | string       | "10m"                                                                                                                                                                                                                                                                                                                                                        |                                                                                     |
+| [ssl-session-tickets](#ssl-session-tickets)                                     | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [ssl-session-ticket-key](#ssl-session-ticket-key)                               | string       | `<Randomly Generated>`                                                                                                                                                                                                                                                                                                                                       |
+| [ssl-session-timeout](#ssl-session-timeout)                                     | string       | "10m"                                                                                                                                                                                                                                                                                                                                                        |                                                                                     |
+| [ssl-buffer-size](#ssl-buffer-size)                                             | string       | "4k"                                                                                                                                                                                                                                                                                                                                                         |                                                                                     |
+| [use-proxy-protocol](#use-proxy-protocol)                                       | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [proxy-protocol-header-timeout](#proxy-protocol-header-timeout)                 | string       | "5s"                                                                                                                                                                                                                                                                                                                                                         |                                                                                     |
+| [enable-aio-write](#enable-aio-write)                                           | bool         | "true"                                                                                                                                                                                                                                                                                                                                                       |                                                                                     |
+| [use-gzip](#use-gzip)                                                           | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [use-geoip](#use-geoip)                                                         | bool         | "true"                                                                                                                                                                                                                                                                                                                                                       |                                                                                     |
+| [use-geoip2](#use-geoip2)                                                       | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [geoip2-autoreload-in-minutes](#geoip2-autoreload-in-minutes)                   | int          | "0"                                                                                                                                                                                                                                                                                                                                                          |                                                                                     |
+| [enable-brotli](#enable-brotli)                                                 | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [brotli-level](#brotli-level)                                                   | int          | 4                                                                                                                                                                                                                                                                                                                                                            |                                                                                     |
+| [brotli-min-length](#brotli-min-length)                                         | int          | 20                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [brotli-types](#brotli-types)                                                   | string       | "application/xml+rss application/atom+xml application/javascript application/x-javascript application/json application/rss+xml application/vnd.ms-fontobject application/x-font-ttf application/x-web-app-manifest+json application/xhtml+xml application/xml font/opentype image/svg+xml image/x-icon text/css text/javascript text/plain text/x-component" |                                                                                     |
+| [use-http2](#use-http2)                                                         | bool         | "true"                                                                                                                                                                                                                                                                                                                                                       |                                                                                     |
+| [gzip-disable](#gzip-disable)                                                   | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [gzip-level](#gzip-level)                                                       | int          | 1                                                                                                                                                                                                                                                                                                                                                            |                                                                                     |
+| [gzip-min-length](#gzip-min-length)                                             | int          | 256                                                                                                                                                                                                                                                                                                                                                          |                                                                                     |
+| [gzip-types](#gzip-types)                                                       | string       | "application/atom+xml application/javascript application/x-javascript application/json application/rss+xml application/vnd.ms-fontobject application/x-font-ttf application/x-web-app-manifest+json application/xhtml+xml application/xml font/opentype image/svg+xml image/x-icon text/css text/javascript text/plain text/x-component"                     |                                                                                     |
+| [worker-processes](#worker-processes)                                           | string       | `<Number of CPUs>`                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [worker-cpu-affinity](#worker-cpu-affinity)                                     | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [worker-shutdown-timeout](#worker-shutdown-timeout)                             | string       | "240s"                                                                                                                                                                                                                                                                                                                                                       |                                                                                     |
+| [enable-serial-reloads](#enable-serial-reloads)                                 | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [load-balance](#load-balance)                                                   | string       | "round_robin"                                                                                                                                                                                                                                                                                                                                                |                                                                                     |
+| [variables-hash-bucket-size](#variables-hash-bucket-size)                       | int          | 128                                                                                                                                                                                                                                                                                                                                                          |                                                                                     |
+| [variables-hash-max-size](#variables-hash-max-size)                             | int          | 2048                                                                                                                                                                                                                                                                                                                                                         |                                                                                     |
+| [upstream-keepalive-connections](#upstream-keepalive-connections)               | int          | 320                                                                                                                                                                                                                                                                                                                                                          |                                                                                     |
+| [upstream-keepalive-time](#upstream-keepalive-time)                             | string       | "1h"                                                                                                                                                                                                                                                                                                                                                         |                                                                                     |
+| [upstream-keepalive-timeout](#upstream-keepalive-timeout)                       | int          | 60                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [upstream-keepalive-requests](#upstream-keepalive-requests)                     | int          | 10000                                                                                                                                                                                                                                                                                                                                                        |                                                                                     |
+| [limit-conn-zone-variable](#limit-conn-zone-variable)                           | string       | "$binary_remote_addr"                                                                                                                                                                                                                                                                                                                                        |                                                                                     |
+| [proxy-stream-timeout](#proxy-stream-timeout)                                   | string       | "600s"                                                                                                                                                                                                                                                                                                                                                       |                                                                                     |
+| [proxy-stream-next-upstream](#proxy-stream-next-upstream)                       | bool         | "true"                                                                                                                                                                                                                                                                                                                                                       |                                                                                     |
+| [proxy-stream-next-upstream-timeout](#proxy-stream-next-upstream-timeout)       | string       | "600s"                                                                                                                                                                                                                                                                                                                                                       |                                                                                     |
+| [proxy-stream-next-upstream-tries](#proxy-stream-next-upstream-tries)           | int          | 3                                                                                                                                                                                                                                                                                                                                                            |                                                                                     |
+| [proxy-stream-responses](#proxy-stream-responses)                               | int          | 1                                                                                                                                                                                                                                                                                                                                                            |                                                                                     |
+| [bind-address](#bind-address)                                                   | []string     | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [use-forwarded-headers](#use-forwarded-headers)                                 | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [enable-real-ip](#enable-real-ip)                                               | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [forwarded-for-header](#forwarded-for-header)                                   | string       | "X-Forwarded-For"                                                                                                                                                                                                                                                                                                                                            |                                                                                     |
+| [compute-full-forwarded-for](#compute-full-forwarded-for)                       | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [proxy-add-original-uri-header](#proxy-add-original-uri-header)                 | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [generate-request-id](#generate-request-id)                                     | bool         | "true"                                                                                                                                                                                                                                                                                                                                                       |                                                                                     |
+| [jaeger-collector-host](#jaeger-collector-host)                                 | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [jaeger-collector-port](#jaeger-collector-port)                                 | int          | 6831                                                                                                                                                                                                                                                                                                                                                         |                                                                                     |
+| [jaeger-endpoint](#jaeger-endpoint)                                             | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [jaeger-service-name](#jaeger-service-name)                                     | string       | "nginx"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [jaeger-propagation-format](#jaeger-propagation-format)                         | string       | "jaeger"                                                                                                                                                                                                                                                                                                                                                     |                                                                                     |
+| [jaeger-sampler-type](#jaeger-sampler-type)                                     | string       | "const"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [jaeger-sampler-param](#jaeger-sampler-param)                                   | string       | "1"                                                                                                                                                                                                                                                                                                                                                          |                                                                                     |
+| [jaeger-sampler-host](#jaeger-sampler-host)                                     | string       | "http://127.0.0.1"                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [jaeger-sampler-port](#jaeger-sampler-port)                                     | int          | 5778                                                                                                                                                                                                                                                                                                                                                         |                                                                                     |
+| [jaeger-trace-context-header-name](#jaeger-trace-context-header-name)           | string       | uber-trace-id                                                                                                                                                                                                                                                                                                                                                |                                                                                     |
+| [jaeger-debug-header](#jaeger-debug-header)                                     | string       | uber-debug-id                                                                                                                                                                                                                                                                                                                                                |                                                                                     |
+| [jaeger-baggage-header](#jaeger-baggage-header)                                 | string       | jaeger-baggage                                                                                                                                                                                                                                                                                                                                               |                                                                                     |
+| [jaeger-trace-baggage-header-prefix](#jaeger-trace-baggage-header-prefix)       | string       | uberctx-                                                                                                                                                                                                                                                                                                                                                     |                                                                                     |
+| [datadog-collector-host](#datadog-collector-host)                               | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [datadog-collector-port](#datadog-collector-port)                               | int          | 8126                                                                                                                                                                                                                                                                                                                                                         |                                                                                     |
+| [datadog-service-name](#datadog-service-name)                                   | string       | "nginx"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [datadog-environment](#datadog-environment)                                     | string       | "prod"                                                                                                                                                                                                                                                                                                                                                       |                                                                                     |
+| [datadog-operation-name-override](#datadog-operation-name-override)             | string       | "nginx.handle"                                                                                                                                                                                                                                                                                                                                               |                                                                                     |
+| [datadog-priority-sampling](#datadog-priority-sampling)                         | bool         | "true"                                                                                                                                                                                                                                                                                                                                                       |                                                                                     |
+| [datadog-sample-rate](#datadog-sample-rate)                                     | float        | 1.0                                                                                                                                                                                                                                                                                                                                                          |                                                                                     |
+| [enable-opentelemetry](#enable-opentelemetry)                                   | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [opentelemetry-trust-incoming-span](#opentelemetry-trust-incoming-span)         | bool         | "true"                                                                                                                                                                                                                                                                                                                                                       |                                                                                     |
+| [opentelemetry-operation-name](#opentelemetry-operation-name)                   | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [opentelemetry-config](#/etc/nginx/opentelemetry.toml)                          | string       | "/etc/nginx/opentelemetry.toml"                                                                                                                                                                                                                                                                                                                              |                                                                                     |
+| [otlp-collector-host](#otlp-collector-host)                                     | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [otlp-collector-port](#otlp-collector-port)                                     | int          | 4317                                                                                                                                                                                                                                                                                                                                                         |                                                                                     |
+| [otel-max-queuesize](#otel-max-queuesize)                                       | int          |                                                                                                                                                                                                                                                                                                                                                              |                                                                                     |
+| [otel-schedule-delay-millis](#otel-schedule-delay-millis)                       | int          |                                                                                                                                                                                                                                                                                                                                                              |                                                                                     |
+| [otel-max-export-batch-size](#otel-max-export-batch-size)                       | int          |                                                                                                                                                                                                                                                                                                                                                              |                                                                                     |
+| [otel-service-name](#otel-service-name)                                         | string       | "nginx"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [otel-sampler](#otel-sampler)                                                   | string       | "AlwaysOff"                                                                                                                                                                                                                                                                                                                                                  |                                                                                     |
+| [otel-sampler-parent-based](#otel-sampler-parent-based)                         | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [otel-sampler-ratio](#otel-sampler-ratio)                                       | float        | 0.01                                                                                                                                                                                                                                                                                                                                                         |                                                                                     |
+| [main-snippet](#main-snippet)                                                   | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [http-snippet](#http-snippet)                                                   | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [server-snippet](#server-snippet)                                               | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [stream-snippet](#stream-snippet)                                               | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [location-snippet](#location-snippet)                                           | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [custom-http-errors](#custom-http-errors)                                       | []int        | []int{}                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [proxy-body-size](#proxy-body-size)                                             | string       | "1m"                                                                                                                                                                                                                                                                                                                                                         |                                                                                     |
+| [proxy-connect-timeout](#proxy-connect-timeout)                                 | int          | 5                                                                                                                                                                                                                                                                                                                                                            |                                                                                     |
+| [proxy-read-timeout](#proxy-read-timeout)                                       | int          | 60                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [proxy-send-timeout](#proxy-send-timeout)                                       | int          | 60                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [proxy-buffers-number](#proxy-buffers-number)                                   | int          | 4                                                                                                                                                                                                                                                                                                                                                            |                                                                                     |
+| [proxy-buffer-size](#proxy-buffer-size)                                         | string       | "4k"                                                                                                                                                                                                                                                                                                                                                         |                                                                                     |
+| [proxy-busy-buffers-size](#proxy-busy-buffers-size)                             | string       | "8k"                                                                                                                                                                                                                                                                                                                                                         |                                                                                     |
+| [proxy-cookie-path](#proxy-cookie-path)                                         | string       | "off"                                                                                                                                                                                                                                                                                                                                                        |                                                                                     |
+| [proxy-cookie-domain](#proxy-cookie-domain)                                     | string       | "off"                                                                                                                                                                                                                                                                                                                                                        |                                                                                     |
+| [proxy-next-upstream](#proxy-next-upstream)                                     | string       | "error timeout"                                                                                                                                                                                                                                                                                                                                              |                                                                                     |
+| [proxy-next-upstream-timeout](#proxy-next-upstream-timeout)                     | int          | 0                                                                                                                                                                                                                                                                                                                                                            |                                                                                     |
+| [proxy-next-upstream-tries](#proxy-next-upstream-tries)                         | int          | 3                                                                                                                                                                                                                                                                                                                                                            |                                                                                     |
+| [proxy-redirect-from](#proxy-redirect-from)                                     | string       | "off"                                                                                                                                                                                                                                                                                                                                                        |                                                                                     |
+| [proxy-request-buffering](#proxy-request-buffering)                             | string       | "on"                                                                                                                                                                                                                                                                                                                                                         |                                                                                     |
+| [ssl-redirect](#ssl-redirect)                                                   | bool         | "true"                                                                                                                                                                                                                                                                                                                                                       |                                                                                     |
+| [force-ssl-redirect](#force-ssl-redirect)                                       | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [denylist-source-range](#denylist-source-range)                                 | []string     | []string{}                                                                                                                                                                                                                                                                                                                                                   |                                                                                     |
+| [whitelist-source-range](#whitelist-source-range)                               | []string     | []string{}                                                                                                                                                                                                                                                                                                                                                   |                                                                                     |
+| [skip-access-log-urls](#skip-access-log-urls)                                   | []string     | []string{}                                                                                                                                                                                                                                                                                                                                                   |                                                                                     |
+| [limit-rate](#limit-rate)                                                       | int          | 0                                                                                                                                                                                                                                                                                                                                                            |                                                                                     |
+| [limit-rate-after](#limit-rate-after)                                           | int          | 0                                                                                                                                                                                                                                                                                                                                                            |                                                                                     |
+| [lua-shared-dicts](#lua-shared-dicts)                                           | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [http-redirect-code](#http-redirect-code)                                       | int          | 308                                                                                                                                                                                                                                                                                                                                                          |                                                                                     |
+| [proxy-buffering](#proxy-buffering)                                             | string       | "off"                                                                                                                                                                                                                                                                                                                                                        |                                                                                     |
+| [limit-req-status-code](#limit-req-status-code)                                 | int          | 503                                                                                                                                                                                                                                                                                                                                                          |                                                                                     |
+| [limit-conn-status-code](#limit-conn-status-code)                               | int          | 503                                                                                                                                                                                                                                                                                                                                                          |                                                                                     |
+| [enable-syslog](#enable-syslog)                                                 | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [syslog-host](#syslog-host)                                                     | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [syslog-port](#syslog-port)                                                     | int          | 514                                                                                                                                                                                                                                                                                                                                                          |                                                                                     |
+| [no-tls-redirect-locations](#no-tls-redirect-locations)                         | string       | "/.well-known/acme-challenge"                                                                                                                                                                                                                                                                                                                                |                                                                                     |
+| [global-allowed-response-headers](#global-allowed-response-headers)             | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [global-auth-url](#global-auth-url)                                             | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [global-auth-method](#global-auth-method)                                       | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [global-auth-signin](#global-auth-signin)                                       | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [global-auth-signin-redirect-param](#global-auth-signin-redirect-param)         | string       | "rd"                                                                                                                                                                                                                                                                                                                                                         |                                                                                     |
+| [global-auth-response-headers](#global-auth-response-headers)                   | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [global-auth-request-redirect](#global-auth-request-redirect)                   | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [global-auth-snippet](#global-auth-snippet)                                     | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [global-auth-cache-key](#global-auth-cache-key)                                 | string       | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [global-auth-cache-duration](#global-auth-cache-duration)                       | string       | "200 202 401 5m"                                                                                                                                                                                                                                                                                                                                             |                                                                                     |
+| [no-auth-locations](#no-auth-locations)                                         | string       | "/.well-known/acme-challenge"                                                                                                                                                                                                                                                                                                                                |                                                                                     |
+| [block-cidrs](#block-cidrs)                                                     | []string     | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [block-user-agents](#block-user-agents)                                         | []string     | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [block-referers](#block-referers)                                               | []string     | ""                                                                                                                                                                                                                                                                                                                                                           |                                                                                     |
+| [proxy-ssl-location-only](#proxy-ssl-location-only)                             | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [default-type](#default-type)                                                   | string       | "text/html"                                                                                                                                                                                                                                                                                                                                                  |                                                                                     |
+| [service-upstream](#service-upstream)                                           | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [ssl-reject-handshake](#ssl-reject-handshake)                                   | bool         | "false"                                                                                                                                                                                                                                                                                                                                                      |                                                                                     |
+| [debug-connections](#debug-connections)                                         | []string     | "127.0.0.1,1.1.1.1/24"                                                                                                                                                                                                                                                                                                                                       |                                                                                     |
+| [strict-validate-path-type](#strict-validate-path-type)                         | bool         | "true"                                                                                                                                                                                                                                                                                                                                                       |                                                                                     |
+| [grpc-buffer-size-kb](#grpc-buffer-size-kb)                                     | int          | 0                                                                                                                                                                                                                                                                                                                                                            |                                                                                     |
+| [relative-redirects](#relative-redirects)                                       | bool         | false                                                                                                                                                                                                                                                                                                                                                        |                                                                                     |
 
 ## add-headers
 
@@ -219,17 +234,37 @@ Sets custom headers from named configmap before sending traffic to the client. S
 
 Enables the return of the header Server from the backend instead of the generic nginx string. _**default:**_ is disabled
 
+## allow-cross-namespace-resources
+
+Enables users to consume cross namespace resource on annotations, when was previously enabled . _**default:**_ false
+
+**Annotations that may be impacted with this change**:
+
+* `auth-secret`
+* `auth-proxy-set-header`
+* `auth-tls-secret`
+* `fastcgi-params-configmap`
+* `proxy-ssl-secret`
+
 ## allow-snippet-annotations
 
-Enables Ingress to parse and add *-snippet annotations/directives created by the user. _**default:**_ `true`
+Enables Ingress to parse and add *-snippet annotations/directives created by the user. _**default:**_ `false`
 
-Warning: We recommend enabling this option only if you TRUST users with permission to create Ingress objects, as this 
+Warning: We recommend enabling this option only if you TRUST users with permission to create Ingress objects, as this
 may allow a user to add restricted configurations to the final nginx.conf file
+
+## annotations-risk-level
+
+Represents the risk accepted on an annotation. If the risk is, for instance `Medium`, annotations with risk High and Critical will not be accepted.
+
+Accepted values are `Critical`, `High`, `Medium` and `Low`.
+
+_**default:**_ `High`
 
 ## annotation-value-word-blocklist
 
-Contains a comma-separated value of chars/words that are well known of being used to abuse Ingress configuration 
-and must be blocked. Related to [CVE-2021-25742](https://github.com/kubernetes/ingress-nginx/issues/7837) 
+Contains a comma-separated value of chars/words that are well known of being used to abuse Ingress configuration
+and must be blocked. Related to [CVE-2021-25742](https://github.com/kubernetes/ingress-nginx/issues/7837)
 
 When an annotation is detected with a value that matches one of the blocked bad words, the whole Ingress won't be configured.
 
@@ -238,7 +273,7 @@ _**default:**_ `""`
 When doing this, the default blocklist is override, which means that the Ingress admin should add all the words
 that should be blocked, here is a suggested block list.
 
-_**suggested:**_ `"load_module,lua_package,_by_lua,location,root,proxy_pass,serviceaccount,{,},',\"`
+_**suggested:**_ `"load_module,lua_package,_by_lua,location,root,proxy_pass,serviceaccount,{,},',\""`
 
 ## hide-headers
 
@@ -370,6 +405,9 @@ _References:_
 
 ## http2-max-field-size
 
+!!! warning
+    This feature was deprecated in 1.1.3 and will be removed in 1.3.0. Use [large-client-header-buffers](#large-client-header-buffers) instead.
+
 Limits the maximum size of an HPACK-compressed request header field.
 
 _References:_
@@ -377,12 +415,18 @@ _References:_
 
 ## http2-max-header-size
 
+!!! warning
+    This feature was deprecated in 1.1.3 and will be removed in 1.3.0. Use [large-client-header-buffers](#large-client-header-buffers) instead.
+
 Limits the maximum size of the entire request header list after HPACK decompression.
 
 _References:_
 [https://nginx.org/en/docs/http/ngx_http_v2_module.html#http2_max_header_size](https://nginx.org/en/docs/http/ngx_http_v2_module.html#http2_max_header_size)
 
 ## http2-max-requests
+
+!!! warning
+    This feature was deprecated in 1.1.3 and will be removed in 1.3.0. Use [upstream-keepalive-requests](#upstream-keepalive-requests) instead.
 
 Sets the maximum number of requests (including push requests) that can be served through one HTTP/2 connection, after which the next client request will lead to connection closing and the need of establishing a new connection.
 
@@ -420,7 +464,7 @@ Enables or disables the preload attribute in the HSTS feature (when it is enable
 
 ## keep-alive
 
-Sets the time during which a keep-alive client connection will stay open on the server side. The zero value disables keep-alive client connections.
+Sets the time, in seconds, during which a keep-alive client connection will stay open on the server side. The zero value disables keep-alive client connections.
 
 _References:_
 [https://nginx.org/en/docs/http/ngx_http_core_module.html#keepalive_timeout](https://nginx.org/en/docs/http/ngx_http_core_module.html#keepalive_timeout)
@@ -457,6 +501,10 @@ Sets the maximum number and size of buffers used for reading large client reques
 _References:_
 [https://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers](https://nginx.org/en/docs/http/ngx_http_core_module.html#large_client_header_buffers)
 
+## log-format-escape-none
+
+Sets if the escape parameter is disabled entirely for character escaping in variables ("true") or controlled by log-format-escape-json ("false") Sets the nginx [log format](https://nginx.org/en/docs/http/ngx_http_log_module.html#log_format).
+
 ## log-format-escape-json
 
 Sets if the escape parameter allows JSON ("true") or default characters escaping in variables ("false") Sets the nginx [log format](https://nginx.org/en/docs/http/ngx_http_log_module.html#log_format).
@@ -468,7 +516,7 @@ Example for json output:
 
 ```json
 
-log-format-upstream: '{"time": "$time_iso8601", "remote_addr": "$proxy_protocol_addr", "x_forward_for": "$proxy_add_x_forwarded_for", "request_id": "$req_id",
+log-format-upstream: '{"time": "$time_iso8601", "remote_addr": "$proxy_protocol_addr", "x_forwarded_for": "$proxy_add_x_forwarded_for", "request_id": "$req_id",
   "remote_user": "$remote_user", "bytes_sent": $bytes_sent, "request_time": $request_time, "status": $status, "vhost": "$host", "request_proto": "$server_protocol",
   "path": "$uri", "request_query": "$args", "request_length": $request_length, "duration": $request_time,"method": "$request_method", "http_referrer": "$http_referer",
   "http_user_agent": "$http_user_agent" }'
@@ -554,10 +602,6 @@ _References:_
 
 - [https://nginx.org/en/docs/hash.html](https://nginx.org/en/docs/hash.html)
 - [https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_headers_hash_bucket_size](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_headers_hash_bucket_size)
-
-## plugins
-
-Activates plugins installed in `/etc/nginx/lua/plugins`. Refer to [ingress-nginx plugins README](https://github.com/kubernetes/ingress-nginx/blob/main/rootfs/etc/nginx/lua/plugins/README.md) for more information on how to write and install a plugin.
 
 ## server-tokens
 
@@ -650,6 +694,10 @@ Enables or disables the [PROXY protocol](https://www.nginx.com/resources/admin-g
 Sets the timeout value for receiving the proxy-protocol headers. The default of 5 seconds prevents the TLS passthrough handler from waiting indefinitely on a dropped connection.
 _**default:**_ 5s
 
+## enable-aio-write
+
+Enables or disables the directive [aio_write](https://nginx.org/en/docs/http/ngx_http_core_module.html#aio_write) that writes files asynchronously. _**default:**_ true
+
 ## use-gzip
 
 Enables or disables compression of HTTP responses using the ["gzip" module](https://nginx.org/en/docs/http/ngx_http_gzip_module.html). MIME types to compress are controlled by [gzip-types](#gzip-types). _**default:**_ false
@@ -664,19 +712,26 @@ _**default:**_ true
 ## use-geoip2
 
 Enables the [geoip2 module](https://github.com/leev/ngx_http_geoip2_module) for NGINX.
-Since `0.27.0` and due to a [change in the MaxMind databases](https://blog.maxmind.com/2019/12/18/significant-changes-to-accessing-and-using-geolite2-databases) a license is required to have access to the databases.
+Since `0.27.0` and due to a [change in the MaxMind databases](https://blog.maxmind.com/2019/12/significant-changes-to-accessing-and-using-geolite2-databases/) a license is required to have access to the databases.
 For this reason, it is required to define a new flag `--maxmind-license-key` in the ingress controller deployment to download the databases needed during the initialization of the ingress controller.
-Alternatively, it is possible to use a volume to mount the files `/etc/nginx/geoip/GeoLite2-City.mmdb` and `/etc/nginx/geoip/GeoLite2-ASN.mmdb`, avoiding the overhead of the download.
+Alternatively, it is possible to use a volume to mount the files `/etc/ingress-controller/geoip/GeoLite2-City.mmdb` and `/etc/ingress-controller/geoip/GeoLite2-ASN.mmdb`, avoiding the overhead of the download.
 
 !!! important
     If the feature is enabled but the files are missing, GeoIP2 will not be enabled.
 
 _**default:**_ false
 
+## geoip2-autoreload-in-minutes
+
+Enables the [geoip2 module](https://github.com/leev/ngx_http_geoip2_module) autoreload in MaxMind databases setting the interval in minutes.
+
+_**default:**_ 0
+
 ## enable-brotli
 
 Enables or disables compression of HTTP responses using the ["brotli" module](https://github.com/google/ngx_brotli).
-The default mime type list to compress is: `application/xml+rss application/atom+xml application/javascript application/x-javascript application/json application/rss+xml application/vnd.ms-fontobject application/x-font-ttf application/x-web-app-manifest+json application/xhtml+xml application/xml font/opentype image/svg+xml image/x-icon text/css text/plain text/x-component`. _**default:**_ is disabled
+The default mime type list to compress is: `application/xml+rss application/atom+xml application/javascript application/x-javascript application/json application/rss+xml application/vnd.ms-fontobject application/x-font-ttf application/x-web-app-manifest+json application/xhtml+xml application/xml font/opentype image/svg+xml image/x-icon text/css text/plain text/x-component`. 
+_**default:**_ false
 
 > __Note:__ Brotli does not works in Safari < 11. For more information see [https://caniuse.com/#feat=brotli](https://caniuse.com/#feat=brotli)
 
@@ -696,6 +751,10 @@ _**default:**_ `application/xml+rss application/atom+xml application/javascript 
 ## use-http2
 
 Enables or disables [HTTP/2](https://nginx.org/en/docs/http/ngx_http_v2_module.html) support in secure connections.
+
+## gzip-disable
+
+Disables [gzipping](http://nginx.org/en/docs/http/ngx_http_gzip_module.html#gzip_disable) of responses for requests with "User-Agent" header fields matching any of the specified regular expressions.
 
 ## gzip-level
 
@@ -768,6 +827,14 @@ _**default:**_ 320
 _References:_
 [https://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive)
 
+
+## upstream-keepalive-time
+
+Sets the maximum time during which requests can be processed through one keepalive connection.
+ _**default:**_ "1h"
+
+_References:_
+[http://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive_time](http://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive_time)
 
 ## upstream-keepalive-timeout
 
@@ -858,41 +925,6 @@ Adds an X-Original-Uri header with the original request URI to the backend reque
 
 Ensures that X-Request-ID is defaulted to a random value, if no X-Request-ID is present in the request
 
-## enable-opentracing
-
-Enables the nginx Opentracing extension. _**default:**_ is disabled
-
-_References:_
-[https://github.com/opentracing-contrib/nginx-opentracing](https://github.com/opentracing-contrib/nginx-opentracing)
-
-## opentracing-operation-name
-
-Specifies a custom name for the server span. _**default:**_ is empty
-
-For example, set to "HTTP $request_method $uri".
-
-## opentracing-location-operation-name
-
-Specifies a custom name for the location span. _**default:**_ is empty
-
-For example, set to "HTTP $request_method $uri".
-
-## zipkin-collector-host
-
-Specifies the host to use when uploading traces. It must be a valid URL.
-
-## zipkin-collector-port
-
-Specifies the port to use when uploading traces. _**default:**_ 9411
-
-## zipkin-service-name
-
-Specifies the service name to use for any traces created. _**default:**_ nginx
-
-## zipkin-sample-rate
-
-Specifies sample rate for any traces created. _**default:**_ 1.0
-
 ## jaeger-collector-host
 
 Specifies the host to use when uploading traces. It must be a valid URL.
@@ -965,7 +997,7 @@ Specifies the environment this trace belongs to. _**default:**_ prod
 
 ## datadog-operation-name-override
 
-Overrides the operation naem to use for any traces crated. _**default:**_ nginx.handle
+Overrides the operation name to use for any traces crated. _**default:**_ nginx.handle
 
 ## datadog-priority-sampling
 
@@ -976,6 +1008,46 @@ If true disables client-side sampling (thus ignoring `sample_rate`) and enables 
 
 Specifies sample rate for any traces created.
 This is effective only when `datadog-priority-sampling` is `false` _**default:**_ 1.0
+
+## enable-opentelemetry
+
+Enables the nginx OpenTelemetry extension. _**default:**_ is disabled
+
+_References:_
+[https://github.com/open-telemetry/opentelemetry-cpp-contrib](https://github.com/open-telemetry/opentelemetry-cpp-contrib/tree/main/instrumentation/nginx)
+
+## opentelemetry-operation-name
+
+Specifies a custom name for the server span. _**default:**_ is empty
+
+For example, set to "HTTP $request_method $uri".
+
+## otlp-collector-host
+
+Specifies the host to use when uploading traces. It must be a valid URL.
+
+## otlp-collector-port
+
+Specifies the port to use when uploading traces. _**default:**_ 4317
+
+## otel-service-name
+
+Specifies the service name to use for any traces created. _**default:**_ nginx
+
+##  opentelemetry-trust-incoming-span: "true"
+Enables or disables using spans from incoming requests as parent for created ones. _**default:**_ true
+
+##  otel-sampler-parent-based
+
+Uses sampler implementation which by default will take a sample if parent Activity is sampled. _**default:**_ false
+
+## otel-sampler-ratio
+
+Specifies sample rate for any traces created. _**default:**_ 0.01
+
+## otel-sampler
+
+Specifies the sampler to be used when sampling traces. The available samplers are: AlwaysOff, AlwaysOn, TraceIdRatioBased, remote. _**default:**_ AlwaysOff
 
 ## main-snippet
 
@@ -1016,13 +1088,19 @@ See NGINX [client_max_body_size](https://nginx.org/en/docs/http/ngx_http_core_mo
 
 Sets the timeout for [establishing a connection with a proxied server](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_connect_timeout). It should be noted that this timeout cannot usually exceed 75 seconds.
 
+It will also set the [grpc_connect_timeout](https://nginx.org/en/docs/http/ngx_http_grpc_module.html#grpc_connect_timeout) for gRPC connections.
+
 ## proxy-read-timeout
 
 Sets the timeout in seconds for [reading a response from the proxied server](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout). The timeout is set only between two successive read operations, not for the transmission of the whole response.
 
+It will also set the [grpc_read_timeout](https://nginx.org/en/docs/http/ngx_http_grpc_module.html#grpc_read_timeout) for gRPC connections.
+
 ## proxy-send-timeout
 
 Sets the timeout in seconds for [transmitting a request to the proxied server](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_send_timeout). The timeout is set only between two successive write operations, not for the transmission of the whole request.
+
+It will also set the [grpc_send_timeout](https://nginx.org/en/docs/http/ngx_http_grpc_module.html#grpc_send_timeout) for gRPC connections.
 
 ## proxy-buffers-number
 
@@ -1031,6 +1109,10 @@ Sets the number of the buffer used for [reading the first part of the response](
 ## proxy-buffer-size
 
 Sets the size of the buffer used for [reading the first part of the response](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size) received from the proxied server. This part usually contains a small response header.
+
+## proxy-busy-buffers-size
+
+[Limits the total size of buffers that can be busy](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_busy_buffers_size) sending a response to the client while the response is not yet fully read.
 
 ## proxy-cookie-path
 
@@ -1072,6 +1154,11 @@ _**default:**_ "true"
 Sets the global value of redirects (308) to HTTPS if the server has a default TLS certificate (defined in extra-args).
 _**default:**_ "false"
 
+## denylist-source-range
+
+Sets the default denylisted IPs for each `server` block. This can be overwritten by an annotation on an Ingress rule.
+See [ngx_http_access_module](https://nginx.org/en/docs/http/ngx_http_access_module.html).
+
 ## whitelist-source-range
 
 Sets the default whitelisted IPs for each `server` block. This can be overwritten by an annotation on an Ingress rule.
@@ -1091,6 +1178,9 @@ _References:_
 ## limit-rate-after
 
 Sets the initial amount after which the further transmission of a response to a client will be rate limited.
+
+_References:_
+[https://nginx.org/en/docs/http/ngx_http_core_module.html#limit_rate_after](https://nginx.org/en/docs/http/ngx_http_core_module.html#limit_rate_after)
 
 ## lua-shared-dicts
 
@@ -1112,9 +1202,6 @@ You can optionally set a size unit to allow for kilobyte-granularity. Allowed un
 ```
 lua-shared-dicts: "certificate_data: 100, my_custom_plugin: 512k"
 ```
-
-_References:_
-[https://nginx.org/en/docs/http/ngx_http_core_module.html#limit_rate_after](https://nginx.org/en/docs/http/ngx_http_core_module.html#limit_rate_after)
 
 ## http-redirect-code
 
@@ -1154,6 +1241,10 @@ Sets the port of syslog server. _**default:**_ 514
 
 A comma-separated list of locations on which http requests will never get redirected to their https counterpart.
 _**default:**_ "/.well-known/acme-challenge"
+
+## global-allowed-response-headers
+
+A comma-separated list of allowed response headers inside the [custom headers annotations](https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md#custom-headers)
 
 ## global-auth-url
 
@@ -1197,7 +1288,7 @@ _**default:**_ ""
 ## global-auth-snippet
 
 Sets a custom snippet to use with external authentication. Applied to all the locations.
-Similar to the Ingress rule annotation `nginx.ingress.kubernetes.io/auth-request-redirect`.
+Similar to the Ingress rule annotation `nginx.ingress.kubernetes.io/auth-snippet`.
 _**default:**_ ""
 
 ## global-auth-cache-key
@@ -1207,6 +1298,11 @@ Enables caching for global auth requests. Specify a lookup key for auth response
 ## global-auth-cache-duration
 
 Set a caching time for auth responses based on their response codes, e.g. `200 202 30m`. See [proxy_cache_valid](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_cache_valid) for details. You may specify multiple, comma-separated values: `200 202 10m, 401 5m`. defaults to `200 202 401 5m`.
+
+## global-auth-always-set-cookie
+
+Always set a cookie returned by auth request. By default, the cookie will be set only if an upstream reports with the code 200, 201, 204, 206, 301, 302, 303, 304, 307, or 308.
+_**default:**_ false
 
 ## no-auth-locations
 
@@ -1249,22 +1345,6 @@ _**default:**_ text/html
 _References:_
 [https://nginx.org/en/docs/http/ngx_http_core_module.html#default_type](https://nginx.org/en/docs/http/ngx_http_core_module.html#default_type)
 
-## global-rate-limit
-
-* `global-rate-limit-status-code`: configure HTTP status code to return when rejecting requests. Defaults to 429.
-
-Configure `memcached` client for [Global Rate Limiting](https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md#global-rate-limiting).
-
-* `global-rate-limit-memcached-host`: IP/FQDN of memcached server to use. Required to enable Global Rate Limiting.
-* `global-rate-limit-memcached-port`: port of memcached server to use. Defaults default memcached port of `11211`.
-* `global-rate-limit-memcached-connect-timeout`: configure timeout for connect, send and receive operations. Unit is millisecond. Defaults to 50ms.
-* `global-rate-limit-memcached-max-idle-timeout`: configure timeout for cleaning idle connections. Unit is millisecond. Defaults to 50ms. 
-* `global-rate-limit-memcached-pool-size`: configure number of max connections to keep alive. Make sure your `memcached` server can handle
-`global-rate-limit-memcached-pool-size * worker-processes * <number of ingress-nginx replicas>` simultaneous connections.
-
-These settings get used by [lua-resty-global-throttle](https://github.com/ElvinEfendi/lua-resty-global-throttle)
-that ingress-nginx includes. Refer to the link to learn more about `lua-resty-global-throttle`.
-
 ## service-upstream
 
 Set if the service's Cluster IP and port should be used instead of a list of all endpoints. This can be overwritten by an annotation on an Ingress rule.
@@ -1277,3 +1357,45 @@ _**default:**_ "false"
 
 _References:_
 [https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_reject_handshake](https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_reject_handshake)
+
+## debug-connections
+Enables debugging log for selected client connections.
+_**default:**_ ""
+
+_References:_
+[http://nginx.org/en/docs/ngx_core_module.html#debug_connection](http://nginx.org/en/docs/ngx_core_module.html#debug_connection)
+
+## strict-validate-path-type
+
+Ingress objects contains a field called pathType that defines the proxy behavior. It can be `Exact`, `Prefix` and `ImplementationSpecific`.
+
+When pathType is configured as `Exact` or `Prefix`, there should be a more strict validation, allowing only paths starting with "/" and
+containing only alphanumeric characters and "-", "_" and additional "/".
+
+When this option is enabled, the validation will happen on the Admission Webhook, making any Ingress not using pathType `ImplementationSpecific`
+and containing invalid characters to be denied.
+
+This means that Ingress objects that rely on paths containing regex characters should use `ImplementationSpecific` pathType.
+
+The cluster admin should establish validation rules using mechanisms like [Open Policy Agent](https://www.openpolicyagent.org/) to 
+validate that only authorized users can use `ImplementationSpecific` pathType and that only the authorized characters can be used.
+
+_**default:**_ "true"
+
+## grpc-buffer-size-kb
+
+Sets the configuration for the GRPC Buffer Size parameter. If not set it will use the default from NGINX.
+
+_References:_
+[https://nginx.org/en/docs/http/ngx_http_grpc_module.html#grpc_buffer_size](https://nginx.org/en/docs/http/ngx_http_grpc_module.html#grpc_buffer_size)
+
+## relative-redirects
+
+Use relative redirects instead of absolute redirects. Absolute redirects are the default in nginx. RFC7231 allows relative redirects since 2014.
+Similar to the Ingress rule annotation `nginx.ingress.kubernetes.io/relative-redirects`.
+
+_**default:**_ "false"
+
+_References:_
+- [https://nginx.org/en/docs/http/ngx_http_core_module.html#absolute_redirect](https://nginx.org/en/docs/http/ngx_http_core_module.html#absolute_redirect)
+- [https://datatracker.ietf.org/doc/html/rfc7231#section-7.1.2](https://datatracker.ietf.org/doc/html/rfc7231#section-7.1.2)

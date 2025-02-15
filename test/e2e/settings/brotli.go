@@ -22,19 +22,18 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 
 	"k8s.io/ingress-nginx/test/e2e/framework"
 )
 
 var _ = framework.IngressNginxDescribe("brotli", func() {
-	f := framework.NewDefaultFramework("brotli")
+	f := framework.NewDefaultFramework(
+		"brotli",
+		framework.WithHTTPBunEnabled(),
+	)
 
 	host := "brotli"
-
-	ginkgo.BeforeEach(func() {
-		f.NewHttpbinDeployment()
-	})
 
 	ginkgo.It("should only compress responses that meet the `brotli-min-length` condition", func() {
 		brotliMinLength := 24
@@ -43,7 +42,7 @@ var _ = framework.IngressNginxDescribe("brotli", func() {
 		f.UpdateNginxConfigMapData("brotli-types", contentEncoding)
 		f.UpdateNginxConfigMapData("brotli-min-length", strconv.Itoa(brotliMinLength))
 
-		f.EnsureIngress(framework.NewSingleIngress(host, "/", host, f.Namespace, framework.HTTPBinService, 80, nil))
+		f.EnsureIngress(framework.NewSingleIngress(host, "/", host, f.Namespace, framework.HTTPBunService, 80, nil))
 
 		f.WaitForNginxConfiguration(
 			func(server string) bool {

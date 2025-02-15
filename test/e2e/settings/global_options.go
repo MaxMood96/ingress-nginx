@@ -21,7 +21,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	"k8s.io/ingress-nginx/test/e2e/framework"
 )
 
@@ -31,7 +31,6 @@ var _ = framework.IngressNginxDescribe("global-options", func() {
 	ginkgo.It("should have worker_rlimit_nofile option", func() {
 		f.WaitForNginxConfiguration(func(server string) bool {
 			return strings.Contains(server, fmt.Sprintf("worker_rlimit_nofile %d;", rlimitMaxNumFiles()-1024))
-
 		})
 	})
 

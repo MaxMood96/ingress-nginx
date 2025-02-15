@@ -28,7 +28,7 @@ import (
 	"time"
 
 	ps "github.com/mitchellh/go-ps"
-	"k8s.io/klog/v2"
+	klog "k8s.io/klog/v2"
 )
 
 // TODO: Check https://github.com/kubernetes/kubernetes/blob/master/pkg/master/ports/ports.go for ports already being used
@@ -36,11 +36,14 @@ import (
 // ProfilerPort port used by the ingress controller to expose the Go Profiler when it is enabled.
 var ProfilerPort = 10245
 
+// ProfilerAddress IP address used by the ingress controller to expose the Go Profiler when it is enabled.
+var ProfilerAddress = "127.0.0.1"
+
 // TemplatePath path of the NGINX template
 var TemplatePath = "/etc/nginx/template/nginx.tmpl"
 
 // PID defines the location of the pid file used by NGINX
-var PID = "/tmp/nginx.pid"
+var PID = "/tmp/nginx/nginx.pid"
 
 // StatusPort port used by NGINX for the status server
 var StatusPort = 10246
@@ -59,7 +62,7 @@ var StatusPath = "/nginx_status"
 var StreamPort = 10247
 
 // NewGetStatusRequest creates a new GET request to the internal NGINX status server
-func NewGetStatusRequest(path string) (int, []byte, error) {
+func NewGetStatusRequest(path string) (statusCode int, data []byte, err error) {
 	url := fmt.Sprintf("http://127.0.0.1:%v%v", StatusPort, path)
 
 	client := http.Client{}
@@ -69,7 +72,7 @@ func NewGetStatusRequest(path string) (int, []byte, error) {
 	}
 	defer res.Body.Close()
 
-	data, err := io.ReadAll(res.Body)
+	data, err = io.ReadAll(res.Body)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -78,7 +81,7 @@ func NewGetStatusRequest(path string) (int, []byte, error) {
 }
 
 // NewPostStatusRequest creates a new POST request to the internal NGINX status server
-func NewPostStatusRequest(path, contentType string, data interface{}) (int, []byte, error) {
+func NewPostStatusRequest(path, contentType string, data interface{}) (statusCode int, body []byte, err error) {
 	url := fmt.Sprintf("http://127.0.0.1:%v%v", StatusPort, path)
 
 	buf, err := json.Marshal(data)
@@ -93,7 +96,7 @@ func NewPostStatusRequest(path, contentType string, data interface{}) (int, []by
 	}
 	defer res.Body.Close()
 
-	body, err := io.ReadAll(res.Body)
+	body, err = io.ReadAll(res.Body)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -102,7 +105,7 @@ func NewPostStatusRequest(path, contentType string, data interface{}) (int, []by
 }
 
 // GetServerBlock takes an nginx.conf file and a host and tries to find the server block for that host
-func GetServerBlock(conf string, host string) (string, error) {
+func GetServerBlock(conf, host string) (string, error) {
 	startMsg := fmt.Sprintf("## start server %v\n", host)
 	endMsg := fmt.Sprintf("## end server %v", host)
 
@@ -110,7 +113,7 @@ func GetServerBlock(conf string, host string) (string, error) {
 	if blockStart < 0 {
 		return "", fmt.Errorf("host %v was not found in the controller's nginx.conf", host)
 	}
-	blockStart = blockStart + len(startMsg)
+	blockStart += len(startMsg)
 
 	blockEnd := strings.Index(conf, endMsg)
 	if blockEnd < 0 {
@@ -160,7 +163,10 @@ func Version() string {
 
 // IsRunning returns true if a process with the name 'nginx' is found
 func IsRunning() bool {
-	processes, _ := ps.Processes()
+	processes, err := ps.Processes()
+	if err != nil {
+		klog.ErrorS(err, "unexpected error obtaining process list")
+	}
 	for _, p := range processes {
 		if p.Executable() == "nginx" {
 			return true

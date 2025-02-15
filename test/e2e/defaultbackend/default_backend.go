@@ -19,8 +19,9 @@ package defaultbackend
 import (
 	"net/http"
 
-	"github.com/gavv/httpexpect/v2"
-	"github.com/onsi/ginkgo"
+	"k8s.io/ingress-nginx/test/e2e/framework/httpexpect"
+
+	"github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 
 	"k8s.io/ingress-nginx/test/e2e/framework"
@@ -48,15 +49,15 @@ var _ = framework.IngressNginxDescribe("[Default Backend]", func() {
 			{"basic HTTPS POST request without host to path / should return 404", "", framework.HTTPS, "POST", "/", http.StatusNotFound},
 			{"basic HTTPS POST request without host to path /demo should return 404", "", framework.HTTPS, "POST", "/demo", http.StatusNotFound},
 
-			{"basic HTTP GET request to host foo.bar.com and path / should return 404", " foo.bar.com", framework.HTTP, "GET", "/", http.StatusNotFound},
-			{"basic HTTP GET request to host foo.bar.com and path /demo should return 404", " foo.bar.com", framework.HTTP, "GET", "/demo", http.StatusNotFound},
-			{"basic HTTPS GET request to host foo.bar.com and path / should return 404", " foo.bar.com", framework.HTTPS, "GET", "/", http.StatusNotFound},
-			{"basic HTTPS GET request to host foo.bar.com and path /demo should return 404", " foo.bar.com", framework.HTTPS, "GET", "/demo", http.StatusNotFound},
+			{"basic HTTP GET request to host foo.bar.com and path / should return 404", "foo.bar.com", framework.HTTP, "GET", "/", http.StatusNotFound},
+			{"basic HTTP GET request to host foo.bar.com and path /demo should return 404", "foo.bar.com", framework.HTTP, "GET", "/demo", http.StatusNotFound},
+			{"basic HTTPS GET request to host foo.bar.com and path / should return 404", "foo.bar.com", framework.HTTPS, "GET", "/", http.StatusNotFound},
+			{"basic HTTPS GET request to host foo.bar.com and path /demo should return 404", "foo.bar.com", framework.HTTPS, "GET", "/demo", http.StatusNotFound},
 
-			{"basic HTTP POST request to host foo.bar.com and path / should return 404", " foo.bar.com", framework.HTTP, "POST", "/", http.StatusNotFound},
-			{"basic HTTP POST request to host foo.bar.com and path /demo should return 404", " foo.bar.com", framework.HTTP, "POST", "/demo", http.StatusNotFound},
-			{"basic HTTPS POST request to host foo.bar.com and path / should return 404", " foo.bar.com", framework.HTTPS, "POST", "/", http.StatusNotFound},
-			{"basic HTTPS POST request to host foo.bar.com and path /demo should return 404", " foo.bar.com", framework.HTTPS, "POST", "/demo", http.StatusNotFound},
+			{"basic HTTP POST request to host foo.bar.com and path / should return 404", "foo.bar.com", framework.HTTP, "POST", "/", http.StatusNotFound},
+			{"basic HTTP POST request to host foo.bar.com and path /demo should return 404", "foo.bar.com", framework.HTTP, "POST", "/demo", http.StatusNotFound},
+			{"basic HTTPS POST request to host foo.bar.com and path / should return 404", "foo.bar.com", framework.HTTPS, "POST", "/", http.StatusNotFound},
+			{"basic HTTPS POST request to host foo.bar.com and path /demo should return 404", "foo.bar.com", framework.HTTPS, "POST", "/demo", http.StatusNotFound},
 		}
 
 		framework.Sleep()
@@ -64,15 +65,13 @@ var _ = framework.IngressNginxDescribe("[Default Backend]", func() {
 		for _, test := range testCases {
 			ginkgo.By(test.Name)
 
-			var req *httpexpect.Request
+			var req *httpexpect.HTTPRequest
 
 			switch test.Scheme {
 			case framework.HTTP:
-				req = f.HTTPTestClient().Request(test.Method, test.Path)
-				req.WithURL(f.GetURL(framework.HTTP) + test.Path)
+				req = f.HTTPTestClient().DoRequest(test.Method, test.Path).WithURL(f.GetURL(framework.HTTP) + test.Path)
 			case framework.HTTPS:
-				req = f.HTTPTestClient().Request(test.Method, test.Path)
-				req.WithURL(f.GetURL(framework.HTTPS) + test.Path)
+				req = f.HTTPTestClient().DoRequest(test.Method, test.Path).WithURL(f.GetURL(framework.HTTPS) + test.Path)
 			default:
 				ginkgo.Fail("Unexpected request scheme")
 			}

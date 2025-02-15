@@ -17,11 +17,10 @@ limitations under the License.
 package annotations
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 
 	"k8s.io/ingress-nginx/test/e2e/framework"
 )
@@ -52,6 +51,6 @@ var _ = framework.DescribeAnnotation("connection-proxy-header", func() {
 			WithHeader("Host", host).
 			Expect().
 			Status(http.StatusOK).
-			Body().Contains(fmt.Sprintf("connection=keep-alive"))
+			Body().Contains("connection=keep-alive")
 	})
 })

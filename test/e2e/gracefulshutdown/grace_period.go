@@ -22,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,7 +33,6 @@ var _ = framework.IngressNginxDescribe("[Shutdown] Grace period shutdown", func(
 	f := framework.NewDefaultFramework("shutdown-grace-period")
 
 	ginkgo.It("/healthz should return status code 500 during shutdown grace period", func() {
-
 		f.NewSlowEchoDeployment()
 
 		err := f.UpdateIngressControllerDeployment(func(deployment *appsv1.Deployment) error {
@@ -83,6 +82,5 @@ var _ = framework.IngressNginxDescribe("[Shutdown] Grace period shutdown", func(
 		for _, err := range <-result {
 			assert.Nil(ginkgo.GinkgoT(), err)
 		}
-
 	})
 })

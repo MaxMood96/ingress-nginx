@@ -78,11 +78,17 @@ func TestIngressAffinityCookieConfig(t *testing.T) {
 	data[parser.GetAnnotationWithPrefix(annotationAffinityCookieExpires)] = "4500"
 	data[parser.GetAnnotationWithPrefix(annotationAffinityCookieMaxAge)] = "3000"
 	data[parser.GetAnnotationWithPrefix(annotationAffinityCookiePath)] = "/foo"
+	data[parser.GetAnnotationWithPrefix(annotationAffinityCookieDomain)] = "foo.bar"
+	data[parser.GetAnnotationWithPrefix(annotationAffinityCookieSameSite)] = "Strict"
 	data[parser.GetAnnotationWithPrefix(annotationAffinityCookieChangeOnFailure)] = "true"
 	data[parser.GetAnnotationWithPrefix(annotationAffinityCookieSecure)] = "true"
 	ing.SetAnnotations(data)
 
-	affin, _ := NewParser(&resolver.Mock{}).Parse(ing)
+	affin, err := NewParser(&resolver.Mock{}).Parse(ing)
+	if err != nil {
+		t.Errorf("unexpected error parsing annotations: %v", err)
+	}
+
 	nginxAffinity, ok := affin.(*Config)
 	if !ok {
 		t.Errorf("expected a Config type")
@@ -110,6 +116,14 @@ func TestIngressAffinityCookieConfig(t *testing.T) {
 
 	if nginxAffinity.Cookie.Path != "/foo" {
 		t.Errorf("expected /foo as session-cookie-path but returned %v", nginxAffinity.Cookie.Path)
+	}
+
+	if nginxAffinity.Cookie.Domain != "foo.bar" {
+		t.Errorf("expected foo.bar as session-cookie-domain but returned %v", nginxAffinity.Cookie.Domain)
+	}
+
+	if nginxAffinity.Cookie.SameSite != "Strict" {
+		t.Errorf("expected Strict as session-cookie-same-site but returned %v", nginxAffinity.Cookie.SameSite)
 	}
 
 	if !nginxAffinity.Cookie.ChangeOnFailure {
